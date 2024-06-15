@@ -1,0 +1,9 @@
+# Copyright (c) 2024 Callender Consulting LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+    Kionix KXTJ3 3-axis accelerometer accessed through I2C bus
+
+compatible: "kionix,kxtj3"
+
+include: ["i2c-device.yaml", "kionix,kxtj3-common.yaml"]

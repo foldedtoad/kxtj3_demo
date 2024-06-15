@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2024 Callender Consulting LLC
+# SPDX-License-Identifier: Apache-2.0
+
+#
+# Sensor driver option
+#
+menuconfig OUT_OF_TREE_SENSOR
+	bool "Out-of-Tree Sensor drivers"
+	help
+	  Enable OOT Sensor drivers configuration.
+
+if OUT_OF_TREE_SENSOR
+
+rsource "./kxtj3/Kconfig"
+
+endif # OUT_OF_TREE_SENSOR
