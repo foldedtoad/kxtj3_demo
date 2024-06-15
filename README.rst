@@ -1,29 +1,31 @@
-.. _kxtj3:
+.. _kxtj3-1057:
 
-KXTJ3: Motion Sensor Monitor
+KXTJ3-1057: Tri-axis Digital Accelerometer
 #############################
 
 Overview
 ********
 
+*** work in progress ***
+
 This sample application periodically reads accelerometer data from the
-KXTJ3 sensor, and displays the sensor data on the console.
+KXTJ3-1057 sensor, and displays the sensor data on the console.
 
 Requirements
 ************
 
-This sample uses the Kionix KXTJ3 system-in-package featuring a 3D digital output motion sensor.
+This sample uses the Kionix KXTJ3-1057 system-in-package featuring a 3D digital output motion sensor.
 
 References
 **********
 
-For more information about the LIS2DH motion sensor see
-https://www.st.com/en/mems-and-sensors/lis2dh.html.
+For more information about the KXTJ3-1057 motion sensor see
+https://www.rohm.com/products/sensors-mems/accelerometer-ics/kxtj3-1057-product#productDetail.
 
 Building and Running
 ********************
 
-The KXTJ3 sensors are available on a variety of boards
+The KXTJ3-1057 sensors are available on a variety of boards
 and shields supported by Zephyr.
 
 Sample Output
