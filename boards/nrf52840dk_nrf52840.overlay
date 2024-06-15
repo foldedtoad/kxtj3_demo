@@ -4,8 +4,6 @@
  * Copyright (c) 2024 Callender Consulting LLC
  */
 
-//#include <zephyr/dt-bindings/sensor/sensor.h>
-
 &pinctrl {
     i2c0_default: i2c0_default {
         group1 {
@@ -34,7 +32,7 @@ arduino_i2c: &i2c0 {
 
     kxtj3: kxtj3@35 {
         status = "okay";
-        compatible = "kioniix,kxtj3";
+        compatible = "kionix,kxtj3";
         reg = <0x35>;
         #io-channel-cells = <1>;
         #address-cells = <1>;

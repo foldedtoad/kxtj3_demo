@@ -363,13 +363,13 @@ int kxtj3_init(const struct device *dev)
     }
 #endif
 
-    LOG_INF("fs=%d, odr=0x%x lp_en=0x%x scale=%d", 1 << (KXTJ3_FS_IDX + 1), KXTJ3_ODR_IDX,
-        (uint8_t)KXTJ3_LP_EN_BIT, kxtj3->scale);
+    LOG_INF("fs=%d, odr=0x%x lp_en=0x%x scale=%d", 
+             1 << (KXTJ3_FS_IDX + 1), KXTJ3_ODR_IDX,
+             (uint8_t)KXTJ3_LP_EN_BIT, kxtj3->scale);
 
     /* enable accel measurements and set power mode and data rate */
     return kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1,
-                    KXTJ3_ACCEL_EN_BITS | KXTJ3_LP_EN_BIT |
-                    KXTJ3_ODR_BITS);
+                    KXTJ3_ACCEL_EN_BITS | KXTJ3_LP_EN_BIT | KXTJ3_ODR_BITS);
 }
 
 #ifdef CONFIG_PM_DEVICE
@@ -382,7 +382,6 @@ static int kxtj3_pm_action(const struct device *dev,
 
     switch (action) {
     case PM_DEVICE_ACTION_RESUME:
-        /* read REFERENCE register (see datasheet rev 6 section 8.9 footnote 1) */
         status = kxtj3->hw_tf->read_reg(dev, KXTJ3_REG_REFERENCE, &regdata);
         if (status < 0) {
             LOG_ERR("failed to read reg_reference");
@@ -405,8 +404,7 @@ static int kxtj3_pm_action(const struct device *dev,
             LOG_ERR("failed to read reg_crtl1");
             return status;
         }
-        status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1,
-                          KXTJ3_SUSPEND);
+        status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1, KXTJ3_SUSPEND);
         if (status < 0) {
             LOG_ERR("failed to write reg_crtl1");
             return status;
@@ -429,15 +427,15 @@ static int kxtj3_pm_action(const struct device *dev,
  * KXTJ3_DEFINE_I2C().
  */
 
-#define KXTJ3_DEVICE_INIT(inst)                    \
-    PM_DEVICE_DT_INST_DEFINE(inst, kxtj3_pm_action);       \
-    SENSOR_DEVICE_DT_INST_DEFINE(inst,              \
-                kxtj3_init,                \
-                PM_DEVICE_DT_INST_GET(inst),        \
-                &kxtj3_data_##inst,            \
-                &kxtj3_config_##inst,          \
-                POST_KERNEL,                \
-                CONFIG_SENSOR_INIT_PRIORITY,        \
+#define KXTJ3_DEVICE_INIT(inst)                        \
+    PM_DEVICE_DT_INST_DEFINE(inst, kxtj3_pm_action);   \
+    SENSOR_DEVICE_DT_INST_DEFINE(inst,                 \
+                kxtj3_init,                            \
+                PM_DEVICE_DT_INST_GET(inst),           \
+                &kxtj3_data_##inst,                    \
+                &kxtj3_config_##inst,                  \
+                POST_KERNEL,                           \
+                CONFIG_SENSOR_INIT_PRIORITY,           \
                 &kxtj3_driver_api);
 
 #define IS_LSM303AGR_DEV(inst) \
@@ -456,104 +454,55 @@ static int kxtj3_pm_action(const struct device *dev,
     DT_INST_PROP(inst, anym_mode)
 
 #ifdef CONFIG_KXTJ3_TRIGGER
-#define GPIO_DT_SPEC_INST_GET_BY_IDX_COND(id, prop, idx)        \
+#define GPIO_DT_SPEC_INST_GET_BY_IDX_COND(id, prop, idx)    \
     COND_CODE_1(DT_INST_PROP_HAS_IDX(id, prop, idx),        \
             (GPIO_DT_SPEC_INST_GET_BY_IDX(id, prop, idx)),  \
             ({.port = NULL, .pin = 0, .dt_flags = 0}))
 
-#define KXTJ3_CFG_INT(inst)                \
-    .gpio_drdy =                            \
-        COND_CODE_1(ANYM_ON_INT1(inst),     \
+#define KXTJ3_CFG_INT(inst)                                         \
+    .gpio_drdy =                                                    \
+        COND_CODE_1(ANYM_ON_INT1(inst),                             \
         ({.port = NULL, .pin = 0, .dt_flags = 0}),                  \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0))),   \
-    .gpio_int =                             \
-        COND_CODE_1(ANYM_ON_INT1(inst),     \
+    .gpio_int =                                                     \
+        COND_CODE_1(ANYM_ON_INT1(inst),                             \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0)),    \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 1))),   \
-    .int1_mode = DT_INST_PROP(inst, int1_gpio_config),          \
+    .int1_mode = DT_INST_PROP(inst, int1_gpio_config),              \
     .int2_mode = DT_INST_PROP(inst, int2_gpio_config),
 #else
 #define KXTJ3_CFG_INT(inst)
 #endif /* CONFIG_KXTJ3_TRIGGER */
 
-#ifdef CONFIG_KXTJ3_MEASURE_TEMPERATURE
-/* The first 8 bits are the integer portion of the temperature.
- * The result is left justified.  The remainder of the bits are
- * the fractional part.
- *
- * KXTJ3 has 8 total bits.
- * KXTJ312/LIS3DH have 10 bits unless they are in lower power mode.
- * compat(kxtj3) cannot be used here because it is the base part.
- */
-#define FRACTIONAL_BITS(inst)   \
-    (DT_NODE_HAS_COMPAT(DT_DRV_INST(inst), st_kxtj312) ||              \
-     DT_NODE_HAS_COMPAT(DT_DRV_INST(inst), st_lis3dh)) ?                \
-              (IS_ENABLED(CONFIG_KXTJ3_OPER_MODE_LOW_POWER) ? 0 : 2) : \
-              0
-
-#define KXTJ3_CFG_TEMPERATURE(inst)    \
-    .temperature = { .cfg_addr = 0x1F,  \
-             .enable_mask = 0xC0,       \
-             .dout_addr = 0x0C,         \
-             .fractional_bits = FRACTIONAL_BITS(inst) },
-#else
-#define KXTJ3_CFG_TEMPERATURE(inst)
-#endif /* CONFIG_KXTJ3_MEASURE_TEMPERATURE */
-
-#define KXTJ3_CONFIG_SPI(inst)                     \
-    {                               \
-        .bus_init = kxtj3_spi_init,                \
-        .bus_cfg = { .spi = SPI_DT_SPEC_INST_GET(inst,      \
-                    SPI_WORD_SET(8) |       \
-                    SPI_OP_MODE_MASTER |        \
-                    SPI_MODE_CPOL |         \
-                    SPI_MODE_CPHA,          \
-                    0) },               \
-        .hw = { .is_lsm303agr_dev = IS_LSM303AGR_DEV(inst), \
-            .disc_pull_up = DISC_PULL_UP(inst),     \
-            .anym_on_int1 = ANYM_ON_INT1(inst),     \
-            .anym_latch = ANYM_LATCH(inst),         \
-            .anym_mode = ANYM_MODE(inst), },        \
-        KXTJ3_CFG_TEMPERATURE(inst)                \
-        KXTJ3_CFG_INT(inst)                    \
-    }
-
-#define KXTJ3_DEFINE_SPI(inst)                     \
-    static struct kxtj3_data kxtj3_data_##inst;           \
-    static const struct kxtj3_config kxtj3_config_##inst =    \
-        KXTJ3_CONFIG_SPI(inst);                \
-    KXTJ3_DEVICE_INIT(inst)
 
 /*
  * Instantiation macros used when a device is on an I2C bus.
  */
-
-#define KXTJ3_CONFIG_I2C(inst)                     \
-    {                               \
-        .bus_init = kxtj3_i2c_init,                \
-        .bus_cfg = { .i2c = I2C_DT_SPEC_INST_GET(inst), },  \
-        .hw = { .is_lsm303agr_dev = IS_LSM303AGR_DEV(inst), \
-            .disc_pull_up = DISC_PULL_UP(inst),     \
-            .anym_on_int1 = ANYM_ON_INT1(inst),     \
-            .anym_latch = ANYM_LATCH(inst),         \
-            .anym_mode = ANYM_MODE(inst), },        \
-        KXTJ3_CFG_TEMPERATURE(inst)                \
-        KXTJ3_CFG_INT(inst)                    \
+#define KXTJ3_CONFIG_I2C(inst)                              \
+    {                                                       \
+        .bus_init = kxtj3_i2c_init,                         \
+        .bus_cfg = {                                        \
+            .i2c = I2C_DT_SPEC_INST_GET(inst),              \
+        },                                                  \
+        .hw = {                                             \
+            .disc_pull_up = DISC_PULL_UP(inst),             \
+            .anym_on_int1 = ANYM_ON_INT1(inst),             \
+            .anym_latch = ANYM_LATCH(inst),                 \
+            .anym_mode = ANYM_MODE(inst),                   \
+        },                                                  \
+        KXTJ3_CFG_INT(inst)                                 \
     }
 
-#define KXTJ3_DEFINE_I2C(inst)                     \
-    static struct kxtj3_data kxtj3_data_##inst;           \
-    static const struct kxtj3_config kxtj3_config_##inst =    \
-        KXTJ3_CONFIG_I2C(inst);                \
+#define KXTJ3_DEFINE_I2C(inst)                              \
+    static struct kxtj3_data kxtj3_data_##inst;             \
+    static const struct kxtj3_config kxtj3_config_##inst =  \
+        KXTJ3_CONFIG_I2C(inst);                             \
     KXTJ3_DEVICE_INIT(inst)
 /*
  * Main instantiation macro. Use of COND_CODE_1() selects the right
  * bus-specific macro at preprocessor time.
  */
 
-#define KXTJ3_DEFINE(inst)                     \
-    COND_CODE_1(DT_INST_ON_BUS(inst, spi),              \
-            (KXTJ3_DEFINE_SPI(inst)),              \
-            (KXTJ3_DEFINE_I2C(inst)))
+#define KXTJ3_DEFINE(inst)   (KXTJ3_DEFINE_I2C(inst))
 
 DT_INST_FOREACH_STATUS_OKAY(KXTJ3_DEFINE)
