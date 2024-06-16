@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 description: |
-    Kionix KXTJ3 3-axis accelerometer accessed through I2C bus
+    Kionix KXTJ3-1057 3-axis accelerometer accessed through I2C bus
 
 compatible: "kionix,kxtj3"
 

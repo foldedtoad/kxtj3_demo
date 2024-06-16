@@ -147,10 +147,10 @@
 #define KXTJ3_REG_INT1_SRC      0x31
 #define KXTJ3_REG_INT1_THS      0x32
 #define KXTJ3_REG_INT1_DUR      0x33
-#define KXTJ3_REG_INT2_CFG      0x34
-#define KXTJ3_REG_INT2_SRC      0x35
-#define KXTJ3_REG_INT2_THS      0x36
-#define KXTJ3_REG_INT2_DUR      0x37
+//#define KXTJ3_REG_INT2_CFG      0x34
+//#define KXTJ3_REG_INT2_SRC      0x35
+//#define KXTJ3_REG_INT2_THS      0x36
+//#define KXTJ3_REG_INT2_DUR      0x37
 
 #define KXTJ3_INT_CFG_MODE_SHIFT    6
 #define KXTJ3_INT_CFG_AOI_CFG       BIT(7)
@@ -200,13 +200,12 @@ struct kxtj3_config {
 #ifdef CONFIG_KXTJ3_TRIGGER
     const struct gpio_dt_spec gpio_drdy;
     const struct gpio_dt_spec gpio_int;
-    const uint8_t int1_mode;
-    const uint8_t int2_mode;
+    const uint8_t int_mode;
 #endif /* CONFIG_KXTJ3_TRIGGER */
     struct {
         bool disc_pull_up : 1;
-        bool anym_on_int1 : 1;
-        bool anym_latch : 1;
+        bool anym_on_int  : 1;
+        bool anym_latch   : 1;
         uint8_t anym_mode : 2;
     } hw;
 };
@@ -238,8 +237,7 @@ struct kxtj3_data {
 
 #ifdef CONFIG_KXTJ3_TRIGGER
     const struct device *dev;
-    struct gpio_callback gpio_int1_cb;
-    struct gpio_callback gpio_int2_cb;
+    struct gpio_callback gpio_int_cb;
 
     sensor_trigger_handler_t handler_drdy;
     const struct sensor_trigger *trig_drdy;
@@ -250,11 +248,7 @@ struct kxtj3_data {
     atomic_t trig_flags;
     enum sensor_channel chan_drdy;
 
-#if defined(CONFIG_KXTJ3_TRIGGER_OWN_THREAD)
-    K_KERNEL_STACK_MEMBER(thread_stack, CONFIG_KXTJ3_THREAD_STACK_SIZE);
-    struct k_thread thread;
-    struct k_sem gpio_sem;
-#elif defined(CONFIG_KXTJ3_TRIGGER_GLOBAL_THREAD)
+#if defined(CONFIG_KXTJ3_TRIGGER_THREAD)
     struct k_work work;
 #endif
 

@@ -9,6 +9,7 @@
 #include <zephyr/sys/__assert.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/pm/device.h>
+#include <zephyr/drivers/sensor.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(kxtj3_i2c);
@@ -233,11 +234,6 @@ static int kxtj3_acc_config(const struct device *dev,
     case SENSOR_ATTR_SAMPLING_FREQUENCY:
         return kxtj3_acc_odr_set(dev, val->val1);
 #endif
-#if defined(CONFIG_KXTJ3_TRIGGER)
-    case SENSOR_ATTR_SLOPE_TH:
-    case SENSOR_ATTR_SLOPE_DUR:
-        return kxtj3_acc_slope_config(dev, attr, val);
-#endif
 #ifdef CONFIG_KXTJ3_ACCEL_HP_FILTERS
     case SENSOR_ATTR_CONFIGURATION:
         return kxtj3_acc_hp_filter_set(dev, val->val1);
@@ -342,17 +338,6 @@ int kxtj3_init(const struct device *dev)
         return status;
     }
 
-#ifdef CONFIG_KXTJ3_MEASURE_TEMPERATURE
-    status = kxtj3->hw_tf->update_reg(dev, cfg->temperature.cfg_addr,
-                       cfg->temperature.enable_mask,
-                       cfg->temperature.enable_mask);
-
-    if (status < 0) {
-        LOG_ERR("Failed to enable temperature measurement");
-        return status;
-    }
-#endif
-
 #ifdef CONFIG_KXTJ3_TRIGGER
     if (cfg->gpio_drdy.port != NULL || cfg->gpio_int.port != NULL) {
         status = kxtj3_init_interrupt(dev);
@@ -444,8 +429,8 @@ static int kxtj3_pm_action(const struct device *dev,
 #define DISC_PULL_UP(inst) \
     DT_INST_PROP(inst, disconnect_sdo_sa0_pull_up)
 
-#define ANYM_ON_INT1(inst) \
-    DT_INST_PROP(inst, anym_on_int1)
+#define ANYM_ON_INT(inst) \
+    DT_INST_PROP(inst, anym_on_int)
 
 #define ANYM_LATCH(inst) \
     !DT_INST_PROP(inst, anym_no_latch)
@@ -461,15 +446,14 @@ static int kxtj3_pm_action(const struct device *dev,
 
 #define KXTJ3_CFG_INT(inst)                                         \
     .gpio_drdy =                                                    \
-        COND_CODE_1(ANYM_ON_INT1(inst),                             \
+        COND_CODE_1(ANYM_ON_INT(inst),                             \
         ({.port = NULL, .pin = 0, .dt_flags = 0}),                  \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0))),   \
     .gpio_int =                                                     \
-        COND_CODE_1(ANYM_ON_INT1(inst),                             \
+        COND_CODE_1(ANYM_ON_INT(inst),                             \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0)),    \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 1))),   \
-    .int1_mode = DT_INST_PROP(inst, int1_gpio_config),              \
-    .int2_mode = DT_INST_PROP(inst, int2_gpio_config),
+    .int_mode = DT_INST_PROP(inst, int_gpio_config)
 #else
 #define KXTJ3_CFG_INT(inst)
 #endif /* CONFIG_KXTJ3_TRIGGER */
@@ -486,7 +470,7 @@ static int kxtj3_pm_action(const struct device *dev,
         },                                                  \
         .hw = {                                             \
             .disc_pull_up = DISC_PULL_UP(inst),             \
-            .anym_on_int1 = ANYM_ON_INT1(inst),             \
+            .anym_on_int = ANYM_ON_INT(inst),               \
             .anym_latch = ANYM_LATCH(inst),                 \
             .anym_mode = ANYM_MODE(inst),                   \
         },                                                  \
@@ -495,14 +479,11 @@ static int kxtj3_pm_action(const struct device *dev,
 
 #define KXTJ3_DEFINE_I2C(inst)                              \
     static struct kxtj3_data kxtj3_data_##inst;             \
-    static const struct kxtj3_config kxtj3_config_##inst =  \
-        KXTJ3_CONFIG_I2C(inst);                             \
+    static const struct kxtj3_config kxtj3_config_##inst = KXTJ3_CONFIG_I2C(inst); \
     KXTJ3_DEVICE_INIT(inst)
-/*
- * Main instantiation macro. Use of COND_CODE_1() selects the right
- * bus-specific macro at preprocessor time.
- */
 
-#define KXTJ3_DEFINE(inst)   (KXTJ3_DEFINE_I2C(inst))
+
+#define KXTJ3_DEFINE(inst)          \
+        (KXTJ3_DEFINE_I2C(inst))
 
 DT_INST_FOREACH_STATUS_OKAY(KXTJ3_DEFINE)

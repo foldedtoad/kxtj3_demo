@@ -4,6 +4,21 @@
  * Copyright (c) 2024 Callender Consulting LLC
  */
 
+//#include <kxtj3_bindings.h>
+
+/* GPIO interrupt configuration */
+#define KXTJ3_DT_GPIO_INT_EDGE             0
+#define KXTJ3_DT_GPIO_INT_EDGE_RISING      1
+#define KXTJ3_DT_GPIO_INT_EDGE_FALLING     2
+#define KXTJ3_DT_GPIO_INT_LEVEL_HIGH       3
+#define KXTJ3_DT_GPIO_INT_LEVEL_LOW        4
+
+/* Any Motion mode */
+#define KXTJ3_DT_ANYM_OR_COMBINATION       0
+#define KXTJ3_DT_ANYM_6D_MOVEMENT          1
+#define KXTJ3_DT_ANYM_AND_COMBINATION      2
+#define KXTJ3_DT_ANYM_6D_POSITION          3
+
 &pinctrl {
     i2c0_default: i2c0_default {
         group1 {
@@ -37,5 +52,7 @@ arduino_i2c: &i2c0 {
         #io-channel-cells = <1>;
         #address-cells = <1>;
         #size-cells = <0>;
+        //anym-on-int;
+        anym_mode = <KXTJ3_DT_ANYM_6D_MOVEMENT>;
     };
 };

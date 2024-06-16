@@ -19,8 +19,8 @@ choice KXTJ3_TRIGGER_MODE
 config KXTJ3_TRIGGER_NONE
 	bool "No trigger"
 
-config KXTJ3_TRIGGER_GLOBAL_THREAD
-	bool "Use global thread"
+config KXTJ3_TRIGGER_THREAD
+	bool "Use kernel thread"
 	depends on GPIO
 	select KXTJ3_TRIGGER
 

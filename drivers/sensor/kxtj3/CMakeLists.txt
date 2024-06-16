@@ -14,6 +14,6 @@ if (CONFIG_KXTJ3)
 		${THIS_DIR}/kxtj3_trigger.c
 	)
 
-    # zephyr_compile_options(-save-temps)
+    zephyr_compile_options(-save-temps)
 
 endif()
