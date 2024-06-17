@@ -7,6 +7,8 @@ cmake_minimum_required(VERSION 3.20.)
 
 set(BOARD nrf52840dk/nrf52840)
 
+set(DTS_ROOT_SYSTEM_INCLUDE_DIRS "dts/bindings/sensor/")
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(kxtj3_demo)
 

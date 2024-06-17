@@ -8,7 +8,7 @@ description: |
     in a .dts or .dtsi file you may include kxtj3.h and use the macros defined there.
 
     Example:
-    #include <dt-bindings/sensor/kxtj3.h>
+    #include <dts/bindings/sensor/kxtj3_dt_bindings.h>
 
     kxtj3: kxtj3@35 {
       ...

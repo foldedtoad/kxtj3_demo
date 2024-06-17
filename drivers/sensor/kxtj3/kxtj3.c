@@ -408,8 +408,7 @@ static int kxtj3_pm_action(const struct device *dev,
 #endif
 
 /*
- * Device creation macro, shared by KXTJ3_DEFINE_SPI() and
- * KXTJ3_DEFINE_I2C().
+ * Device creation macro, KXTJ3_DEFINE_I2C().
  */
 
 #define KXTJ3_DEVICE_INIT(inst)                        \
@@ -479,7 +478,8 @@ static int kxtj3_pm_action(const struct device *dev,
 
 #define KXTJ3_DEFINE_I2C(inst)                              \
     static struct kxtj3_data kxtj3_data_##inst;             \
-    static const struct kxtj3_config kxtj3_config_##inst = KXTJ3_CONFIG_I2C(inst); \
+    static const struct kxtj3_config kxtj3_config_##inst =  \
+         KXTJ3_CONFIG_I2C(inst);                            \
     KXTJ3_DEVICE_INIT(inst)
 
 
