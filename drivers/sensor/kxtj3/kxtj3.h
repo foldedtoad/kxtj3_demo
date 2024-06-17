@@ -16,10 +16,6 @@
 #define KXTJ3_REG_WAI           0x0f
 #define KXTJ3_CHIP_ID           0x35
 
-#if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
-#include <zephyr/drivers/spi.h>
-#endif /* DT_ANY_INST_ON_BUS_STATUS_OKAY(spi) */
-
 #include <zephyr/drivers/i2c.h>
 
 #define KXTJ3_REG_CTRL0     0x1e
@@ -86,9 +82,9 @@
 #define KXTJ3_HPIS_EN_MASK      BIT_MASK(2)
 
 #define KXTJ3_REG_CTRL3     0x22
-#define KXTJ3_EN_CLICK_INT1     BIT(7)
-#define KXTJ3_EN_IA_INT1        BIT(6)
-#define KXTJ3_EN_DRDY1_INT1     BIT(4)
+#define KXTJ3_EN_CLICK_INT      BIT(7)
+#define KXTJ3_EN_IA_INT         BIT(6)
+#define KXTJ3_EN_DRDY1_INT      BIT(4)
 
 #define KXTJ3_REG_CTRL4     0x23
 #define KXTJ3_CTRL4_BDU_BIT     BIT(7)
@@ -115,8 +111,7 @@
 #endif
 
 #define KXTJ3_REG_CTRL5     0x24
-#define KXTJ3_EN_LIR_INT2       BIT(1)
-#define KXTJ3_EN_LIR_INT1       BIT(3)
+#define KXTJ3_EN_LIR_INT       BIT(3)
 
 #define KXTJ3_REG_CTRL6     0x25
 #define KXTJ3_EN_CLICK_INT2     BIT(7)
@@ -143,10 +138,10 @@
 #define KXTJ3_REG_ACCEL_Y_MSB       0x2B
 #define KXTJ3_REG_ACCEL_Z_MSB       0x2D
 
-#define KXTJ3_REG_INT1_CFG      0x30
-#define KXTJ3_REG_INT1_SRC      0x31
-#define KXTJ3_REG_INT1_THS      0x32
-#define KXTJ3_REG_INT1_DUR      0x33
+#define KXTJ3_REG_INT_CFG      0x30
+#define KXTJ3_REG_INT_SRC      0x31
+#define KXTJ3_REG_INT_THS      0x32
+#define KXTJ3_REG_INT_DUR      0x33
 //#define KXTJ3_REG_INT2_CFG      0x34
 //#define KXTJ3_REG_INT2_SRC      0x35
 //#define KXTJ3_REG_INT2_THS      0x36

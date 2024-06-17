@@ -12,7 +12,7 @@
 #include <zephyr/drivers/sensor.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(kxtj3_i2c);
+LOG_MODULE_REGISTER(kxtj3);
 
 #include "kxtj3.h"
 
@@ -425,9 +425,6 @@ static int kxtj3_pm_action(const struct device *dev,
 #define IS_LSM303AGR_DEV(inst) \
     DT_NODE_HAS_COMPAT(DT_DRV_INST(inst), st_lsm303agr_accel)
 
-#define DISC_PULL_UP(inst) \
-    DT_INST_PROP(inst, disconnect_sdo_sa0_pull_up)
-
 #define ANYM_ON_INT(inst) \
     DT_INST_PROP(inst, anym_on_int)
 
@@ -468,7 +465,6 @@ static int kxtj3_pm_action(const struct device *dev,
             .i2c = I2C_DT_SPEC_INST_GET(inst),              \
         },                                                  \
         .hw = {                                             \
-            .disc_pull_up = DISC_PULL_UP(inst),             \
             .anym_on_int = ANYM_ON_INT(inst),               \
             .anym_latch = ANYM_LATCH(inst),                 \
             .anym_mode = ANYM_MODE(inst),                   \
@@ -484,6 +480,6 @@ static int kxtj3_pm_action(const struct device *dev,
 
 
 #define KXTJ3_DEFINE(inst)          \
-        (KXTJ3_DEFINE_I2C(inst))
+        KXTJ3_DEFINE_I2C(inst)
 
 DT_INST_FOREACH_STATUS_OKAY(KXTJ3_DEFINE)

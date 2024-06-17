@@ -10,7 +10,7 @@
 #include <zephyr/kernel.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_DECLARE(kxtj3, CONFIG_SENSOR_LOG_LEVEL);
+LOG_MODULE_REGISTER(kxtj3_trigger);
 
 #include "kxtj3.h"
 
@@ -352,17 +352,6 @@ check_gpio_int:
 
     gpio_init_callback(&kxtj3->gpio_int_cb, kxtj3_gpio_int_callback,
                        BIT(cfg->gpio_int.pin));
-
-    /* callback is going to be enabled by trigger setting function */
-    status = gpio_add_callback(cfg->gpio_int.port, &kxtj3->gpio_int2_cb);
-    if (status < 0) {
-        LOG_ERR("Could not add gpio int2 callback (%d)", status);
-        return status;
-    }
-
-    LOG_INF("%s: int2 on %s.%02u", dev->name,
-       cfg->gpio_int.port->name,
-       cfg->gpio_int.pin);
 
     /* disable interrupt in case of warm (re)boot */
     status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_INT_CFG, 0);
