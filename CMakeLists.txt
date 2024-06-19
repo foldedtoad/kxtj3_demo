@@ -5,7 +5,7 @@
 #
 cmake_minimum_required(VERSION 3.20.)
 
-set(BOARD nrf52840dk/nrf52840)
+set(BOARD xiao_ble)
 
 set(DTS_ROOT_SYSTEM_INCLUDE_DIRS "dts/bindings/sensor/")
 
@@ -20,4 +20,4 @@ FILE(GLOB app_sources src/*.c)
 
 target_sources(app PRIVATE ${app_sources})
 
-# zephyr_compile_options(-save-temps)
+zephyr_compile_options(-save-temps)

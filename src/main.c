@@ -9,6 +9,9 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(main);
+
 static void fetch_and_display(const struct device *sensor)
 {
     static unsigned int count;
@@ -28,10 +31,10 @@ static void fetch_and_display(const struct device *sensor)
         rc = sensor_channel_get(sensor, SENSOR_CHAN_ACCEL_XYZ, accel);
     }
     if (rc < 0) {
-        printf("ERROR: Update failed: %d\n", rc);
+        LOG_ERR("ERROR: Update failed: %d", rc);
     }
     else {
-        printf("#%u @ %u ms: %sx %f , y %f , z %f\n",
+        LOG_INF("#%u @ %u ms: %sx %f , y %f , z %f",
                count, k_uptime_get_32(), overrun,
                sensor_value_to_double(&accel[0]),
                sensor_value_to_double(&accel[1]),
@@ -49,14 +52,14 @@ static void trigger_handler(const struct device *dev,
 
 int main(void)
 {
-    const struct device *const sensor = DEVICE_DT_GET_ANY(st_KXTJ3);
+    const struct device *const sensor = DEVICE_DT_GET_ANY(kionix_kxtj3);
 
     if (sensor == NULL) {
-        printf("No device found\n");
+        LOG_INF("No device found");
         return 0;
     }
     if (!device_is_ready(sensor)) {
-        printf("Device %s is not ready\n", sensor->name);
+        LOG_INF("Device %s is not ready", sensor->name);
         return 0;
     }
 
@@ -77,25 +80,25 @@ int main(void)
                          SENSOR_ATTR_SAMPLING_FREQUENCY,
                          &odr);
             if (rc != 0) {
-                printf("Failed to set odr: %d\n", rc);
+                LOG_ERR("Failed to set odr: %d", rc);
                 return 0;
             }
-            printf("Sampling at %u Hz\n", odr.val1);
+            LOG_INF("Sampling at %u Hz", odr.val1);
         }
 
         rc = sensor_trigger_set(sensor, &trig, trigger_handler);
         if (rc != 0) {
-            printf("Failed to set trigger: %d\n", rc);
+            LOG_ERR("Failed to set trigger: %d", rc);
             return 0;
         }
 
-        printf("Waiting for triggers\n");
+        LOG_INF("Waiting for triggers");
         while (true) {
             k_sleep(K_MSEC(2000));
         }
     }
 #else /* CONFIG_KXTJ3_TRIGGER */
-    printf("Polling at 0.5 Hz\n");
+    LOG_INF("Polling at 0.5 Hz");
     while (true) {
         fetch_and_display(sensor);
         k_sleep(K_MSEC(2000));
