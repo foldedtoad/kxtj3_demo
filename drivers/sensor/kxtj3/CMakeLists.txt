@@ -8,12 +8,10 @@ if (CONFIG_KXTJ3)
 
 	zephyr_library_include_directories(${THIS_DIR})
 
-	zephyr_library_sources(
-		${THIS_DIR}/kxtj3.c
-		${THIS_DIR}/kxtj3_i2c.c
-		${THIS_DIR}/kxtj3_trigger.c
-	)
+	zephyr_library_sources(kxtj3.c)
+	zephyr_library_sources(kxtj3_i2c.c)
+	zephyr_library_sources_ifdef(CONFIG_KXTJ3_TRIGGER kxtj3_trigger.c)
 
-    zephyr_compile_options(-save-temps)
+    # zephyr_compile_options(-save-temps)
 
 endif()

@@ -48,15 +48,15 @@ arduino_i2c: &i2c0 {
     pinctrl-names = "default", "sleep";
     clock-frequency = <I2C_BITRATE_STANDARD>;
 
-    kxtj3: kxtj3@0e {
+    kxtj3: kxtj3@e {
         status = "okay";
         compatible = "kionix,kxtj3";
-        reg = <0x0e>;
+        reg = <0xe>;
         #io-channel-cells = <1>;
         #address-cells = <1>;
         #size-cells = <0>;
-        irq-gpios = <&gpio0 29 0>;
-        anym-on-int;
-        anym-mode = <KXTJ3_DT_ANYM_6D_MOVEMENT>;
+        //irq-gpios = <&gpio0 29 0>;
+        //anym-on-int;
+        //anym-mode = <KXTJ3_DT_ANYM_6D_MOVEMENT>;
     };
 };
