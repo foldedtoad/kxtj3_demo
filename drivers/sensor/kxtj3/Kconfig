@@ -86,49 +86,47 @@ endchoice
 
 choice KXTJ3_ODR
 	prompt "Output data rate frequency"
-	default KXTJ3_ODR_RUNTIME
+	default KXTJ3_ODR_5
 	help
 	  Initial data rate frequency of acceleration data at initialization.
 	  Supported values:
-	  1Hz, 10Hz, 25Hz, 50Hz, 100Hz, 200Hz, 400Hz in all power modes
-	  1620Hz, 5376Hz in low power mode only
-	  1344Hz in normal power mode
-
-config KXTJ3_ODR_RUNTIME
-	bool "Set at runtime"
+	  0.3905Hz, 0.781Hz, 1.563Hz, 3.125Hz, 6.25Hz, 12.5Hz, 25Hz, 50Hz, 100Hz, 200Hz, 400Hz, 800Hz.
 
 config KXTJ3_ODR_1
-	bool "1Hz"
+	bool "0.3905Hz"
 
 config KXTJ3_ODR_2
-	bool "10Hz"
+	bool "0.781Hz"
 
 config KXTJ3_ODR_3
-	bool "25Hz"
+	bool "1.563Hz"
 
 config KXTJ3_ODR_4
-	bool "50Hz"
+	bool "3.125Hz"
 
 config KXTJ3_ODR_5
-	bool "100Hz"
+	bool "6.25Hz"
 
 config KXTJ3_ODR_6
-	bool "200Hz"
+	bool "12.5Hz"
 
 config KXTJ3_ODR_7
-	bool "400Hz"
+	bool "25Hz"
 
 config KXTJ3_ODR_8
-	bool "1.6KHz"
-	depends on KXTJ3_OPER_MODE_LOW_POWER
+	bool "50Hz"
 
-config KXTJ3_ODR_9_NORMAL
-	bool "1.25KHz"
-	depends on KXTJ3_OPER_MODE_NORMAL || KXTJ3_OPER_MODE_HIGH_RES
+config KXTJ3_ODR_9
+	bool "100Hz"
 
-config KXTJ3_ODR_9_LOW
-	bool "5KHz"
-	depends on KXTJ3_OPER_MODE_LOW_POWER
+config KXTJ3_ODR_10
+	bool "200Hz"
+
+config KXTJ3_ODR_11
+	bool "400Hz"
+
+config KXTJ3_ODR_12
+	bool "800Hz"
 
 endchoice
 

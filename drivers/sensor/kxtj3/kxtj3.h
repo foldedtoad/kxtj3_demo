@@ -13,174 +13,54 @@
 #include <zephyr/drivers/sensor.h>
 #include <string.h>
 
-#define KXTJ3_REG_WAI           0x0f
-#define KXTJ3_CHIP_ID           0x35
 
 #include <zephyr/drivers/i2c.h>
 
-#define KXTJ3_REG_CTRL0     0x1e
-#define KXTJ3_SDO_PU_DISC_MASK      BIT(7)
 
-#define KXTJ3_REG_CTRL1     0x20
-#define KXTJ3_ACCEL_X_EN_BIT        BIT(0)
-#define KXTJ3_ACCEL_Y_EN_BIT        BIT(1)
-#define KXTJ3_ACCEL_Z_EN_BIT        BIT(2)
-#define KXTJ3_ACCEL_EN_BITS     (KXTJ3_ACCEL_X_EN_BIT | \
-                                 KXTJ3_ACCEL_Y_EN_BIT | \
-                                 KXTJ3_ACCEL_Z_EN_BIT)
-#define KXTJ3_ACCEL_XYZ_MASK        BIT_MASK(3)
+#define KXTJ3_WHO_AM_I               0x0F
+#define KXTJ3_WHO_AM_I_VALUE         0x35
 
-#define KXTJ3_LP_EN_BIT_MASK        BIT(3)
-#if defined(CONFIG_KXTJ3_OPER_MODE_LOW_POWER)
-    #define KXTJ3_LP_EN_BIT BIT(3)
-#else
-    #define KXTJ3_LP_EN_BIT 0
-#endif
+#define KXTJ3_DCST_RESP              0x0C 
 
-#define KXTJ3_SUSPEND           0
+#define KXTJ3_OUT_X_L                0x06
+#define KXTJ3_OUT_X_H                0x07
+#define KXTJ3_OUT_Y_L                0x08
+#define KXTJ3_OUT_Y_H                0x09
+#define KXTJ3_OUT_Z_L                0x0A
+#define KXTJ3_OUT_Z_H                0x0B
 
-#define KXTJ3_ODR_1         1
-#define KXTJ3_ODR_2         2
-#define KXTJ3_ODR_3         3
-#define KXTJ3_ODR_4         4
-#define KXTJ3_ODR_5         5
-#define KXTJ3_ODR_6         6
-#define KXTJ3_ODR_7         7
-#define KXTJ3_ODR_8         8
-#define KXTJ3_ODR_9         9
+#define KXTJ3_STATUS                 0x18
+#define KXTJ3_INT_SOURCE1            0x16
+#define KXTJ3_INT_SOURCE2            0x17
+#define KXTJ3_INT_REL                0x1A
 
-#if defined(CONFIG_KXTJ3_ODR_1)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_1
-#elif defined(CONFIG_KXTJ3_ODR_2)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_2
-#elif defined(CONFIG_KXTJ3_ODR_3)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_3
-#elif defined(CONFIG_KXTJ3_ODR_4) || defined(CONFIG_KXTJ3_ODR_RUNTIME)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_4
-#elif defined(CONFIG_KXTJ3_ODR_5)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_5
-#elif defined(CONFIG_KXTJ3_ODR_6)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_6
-#elif defined(CONFIG_KXTJ3_ODR_7)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_7
-#elif defined(CONFIG_KXTJ3_ODR_8)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_8
-#elif defined(CONFIG_KXTJ3_ODR_9_NORMAL) || defined(CONFIG_KXTJ3_ODR_9_LOW)
-    #define KXTJ3_ODR_IDX       KXTJ3_ODR_9
-#endif
+#define KXTJ3_CTRL_REG1              0x1B
+#define KXTJ3_CTRL_REG1_PC           0x80
+#define KXTJ3_CTRL_REG1_RES          0x40
+#define KXTJ3_CTRL_REG1_DRDYE        0x20
+#define KXTJ3_CTRL_REG1_GSEL1        0x10
+#define KXTJ3_CTRL_REG1_GSEL2        0x08
+#define KXTJ3_CTRL_REG1_EN16G        0x04
+#define KXTJ3_CTRL_REG1_WUFE         0x02
 
-#define KXTJ3_ODR_SHIFT     4
-#define KXTJ3_ODR_RATE(r)       ((r) << KXTJ3_ODR_SHIFT)
-#define KXTJ3_ODR_BITS          (KXTJ3_ODR_RATE(KXTJ3_ODR_IDX))
-#define KXTJ3_ODR_MASK          (BIT_MASK(4) << KXTJ3_ODR_SHIFT)
+#define KXTJ3_CTRL_REG2              0x1D 
+#define KXTJ3_INT_CTRL_REG1          0x1E   
+#define KXTJ3_INT_CTRL_REG2          0x1F   
+#define KXTJ3_DATA_CTRL_REG          0x21   
+#define KXTJ3_WAKEUP_COUNTER         0x29   
+#define KXTJ3_NA_COUNTER             0x2A   
+#define KXTJ3_SELF_TEST              0x3A
+#define KXTJ3_WAKEUP_THRD_H          0x6A   
+#define KXTJ3_WAKEUP_THRD_L          0x6B   
 
-#define KXTJ3_REG_CTRL2     0x21
-#define KXTJ3_HPIS1_EN_BIT      BIT(0)
-#define KXTJ3_HPIS2_EN_BIT      BIT(1)
-#define KXTJ3_FDS_EN_BIT        BIT(3)
 
-#define KXTJ3_HPIS_EN_MASK      BIT_MASK(2)
-
-#define KXTJ3_REG_CTRL3     0x22
-#define KXTJ3_EN_CLICK_INT      BIT(7)
-#define KXTJ3_EN_IA_INT         BIT(6)
-#define KXTJ3_EN_DRDY1_INT      BIT(4)
-
-#define KXTJ3_REG_CTRL4     0x23
-#define KXTJ3_CTRL4_BDU_BIT     BIT(7)
-#define KXTJ3_FS_SHIFT          4
-#define KXTJ3_FS_MASK           (BIT_MASK(2) << KXTJ3_FS_SHIFT)
-
-#if defined(CONFIG_KXTJ3_ACCEL_RANGE_2G) ||\
-    defined(CONFIG_KXTJ3_ACCEL_RANGE_RUNTIME)
-    #define KXTJ3_FS_IDX        0
-#elif defined(CONFIG_KXTJ3_ACCEL_RANGE_4G)
-    #define KXTJ3_FS_IDX        1
-#elif defined(CONFIG_KXTJ3_ACCEL_RANGE_8G)
-    #define KXTJ3_FS_IDX        2
-#elif defined(CONFIG_KXTJ3_ACCEL_RANGE_16G)
-    #define KXTJ3_FS_IDX        3
-#endif
-
-#define KXTJ3_FS_SELECT(fs)     ((fs) << KXTJ3_FS_SHIFT)
-#define KXTJ3_FS_BITS           (KXTJ3_FS_SELECT(KXTJ3_FS_IDX))
-#if defined(CONFIG_KXTJ3_OPER_MODE_HIGH_RES)
-    #define KXTJ3_HR_BIT        BIT(3)
-#else
-    #define KXTJ3_HR_BIT        0
-#endif
-
-#define KXTJ3_REG_CTRL5     0x24
-#define KXTJ3_EN_LIR_INT       BIT(3)
-
-#define KXTJ3_REG_CTRL6     0x25
-#define KXTJ3_EN_CLICK_INT2     BIT(7)
-#define KXTJ3_EN_IA_INT2        BIT(5)
-
-#define KXTJ3_REG_REFERENCE     0x26
-
-#define KXTJ3_REG_STATUS        0x27
-#define KXTJ3_STATUS_ZYZ_OVR        BIT(7)
-#define KXTJ3_STATUS_Z_OVR      BIT(6)
-#define KXTJ3_STATUS_Y_OVR      BIT(5)
-#define KXTJ3_STATUS_X_OVR      BIT(4)
-#define KXTJ3_STATUS_OVR_MASK       (BIT_MASK(4) << 4)
-#define KXTJ3_STATUS_ZYX_DRDY       BIT(3)
-#define KXTJ3_STATUS_Z_DRDY     BIT(2)
-#define KXTJ3_STATUS_Y_DRDY     BIT(1)
-#define KXTJ3_STATUS_X_DRDY     BIT(0)
-#define KXTJ3_STATUS_DRDY_MASK      BIT_MASK(4)
-
-#define KXTJ3_REG_ACCEL_X_LSB       0x28
-#define KXTJ3_REG_ACCEL_Y_LSB       0x2A
-#define KXTJ3_REG_ACCEL_Z_LSB       0x2C
-#define KXTJ3_REG_ACCEL_X_MSB       0x29
-#define KXTJ3_REG_ACCEL_Y_MSB       0x2B
-#define KXTJ3_REG_ACCEL_Z_MSB       0x2D
-
-#define KXTJ3_REG_INT_CFG      0x30
-#define KXTJ3_REG_INT_SRC      0x31
-#define KXTJ3_REG_INT_THS      0x32
-#define KXTJ3_REG_INT_DUR      0x33
-//#define KXTJ3_REG_INT2_CFG      0x34
-//#define KXTJ3_REG_INT2_SRC      0x35
-//#define KXTJ3_REG_INT2_THS      0x36
-//#define KXTJ3_REG_INT2_DUR      0x37
-
-#define KXTJ3_INT_CFG_MODE_SHIFT    6
-#define KXTJ3_INT_CFG_AOI_CFG       BIT(7)
-#define KXTJ3_INT_CFG_6D_CFG        BIT(6)
-#define KXTJ3_INT_CFG_ZHIE_ZUPE BIT(5)
-#define KXTJ3_INT_CFG_ZLIE_ZDOWNE   BIT(4)
-#define KXTJ3_INT_CFG_YHIE_YUPE BIT(3)
-#define KXTJ3_INT_CFG_YLIE_YDOWNE   BIT(2)
-#define KXTJ3_INT_CFG_XHIE_XUPE BIT(1)
-#define KXTJ3_INT_CFG_XLIE_XDOWNE   BIT(0)
-
-#define KXTJ3_REG_CFG_CLICK     0x38
-#define KXTJ3_EN_CLICK_ZD       BIT(5)
-#define KXTJ3_EN_CLICK_ZS       BIT(4)
-#define KXTJ3_EN_CLICK_YD       BIT(3)
-#define KXTJ3_EN_CLICK_YS       BIT(2)
-#define KXTJ3_EN_CLICK_XD       BIT(1)
-#define KXTJ3_EN_CLICK_XS       BIT(0)
-
-#define KXTJ3_REG_CLICK_SRC     0x39
-#define KXTJ3_CLICK_SRC_DCLICK      BIT(5)
-#define KXTJ3_CLICK_SRC_SCLICK      BIT(4)
-
-#define KXTJ3_REG_CFG_CLICK_THS 0x3A
-#define KXTJ3_CLICK_LIR     BIT(7)
-
-#define KXTJ3_REG_TIME_LIMIT        0x3B
 
 /* sample buffer size includes status register */
-#define KXTJ3_BUF_SZ            7
+#define KXTJ3_BUF_SZ            6
 
 union kxtj3_sample {
     uint8_t raw[KXTJ3_BUF_SZ];
     struct {
-        uint8_t status;
         int16_t xyz[3];
     } __packed;
 };
