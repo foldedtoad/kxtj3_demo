@@ -74,10 +74,10 @@ choice KXTJ3_OPER_MODE
 	  mode for chip at init.
 
 config KXTJ3_OPER_MODE_HIGH_RES
-	bool "high resolution (12 bit)"
+	bool "high resolution (14 bit)"
 
 config KXTJ3_OPER_MODE_NORMAL
-	bool "normal (10 bit)"
+	bool "normal (12 bit)"
 
 config KXTJ3_OPER_MODE_LOW_POWER
 	bool "low power (8 bit)"

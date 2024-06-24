@@ -48,6 +48,39 @@ LOG_MODULE_REGISTER(kxtj3);
                                     #define KXTJ3_ODR_BITS        0xFF
 #endif
 
+/*
+ *  Convert Kconfig defines to kxtj3 RANGE bits
+ */
+#if defined(CONFIG_KXTJ3_ACCEL_RANGE_2G)
+                                    #define KXTJ3_RANGE_BITS      0x00
+#elif defined(CONFIG_KXTJ3_ACCEL_RANGE_4G)
+                                    #define KXTJ3_RANGE_BITS      0x08
+#elif defined(CONFIG_KXTJ3_ACCEL_RANGE_8G)
+                                    #define KXTJ3_RANGE_BITS      0x10
+#elif defined(CONFIG_KXTJ3_ACCEL_RANGE_16G)
+                                    #define KXTJ3_RANGE_BITS      0x01
+#else
+                                    #define KXTJ3_RANGE_BITS      0xFF
+#endif
+
+
+/*
+ *  Convert Kconfig defines to kxtj3 RESOLUTION bits (Operating Mode)
+ */
+#if defined(CONFIG_KXTJ3_OPER_MODE_LOW_POWER)
+                #define KXTJ3_RESOL_BITS      KXTJ3_CTRL_REG1_PC
+                #define KXTJ3_SCALE           127
+#elif defined(CONFIG_KXTJ3_OPER_MODE_NORMAL)
+                #define KXTJ3_RESOL_BITS      (KXTJ3_CTRL_REG1_PC + KXTJ3_CTRL_REG1_RES)
+                #define KXTJ3_SCALE           2047
+#elif defined(CONFIG_KXTJ3_OPER_MODE_HIGH_RES)
+                #define KXTJ3_RESOL_BITS      (KXTJ3_CTRL_REG1_PC + KXTJ3_CTRL_REG1_RES)
+                #define KXTJ3_SCALE           8191
+#else
+                #define KXTJ3_RESOL_BITS      0xFF
+                #define KXTJ3_SCALE           0
+#endif
+
 
 static void kxtj3_convert(int16_t raw_val, uint32_t scale,
                           struct sensor_value *val)
@@ -119,17 +152,43 @@ static int kxtj3_fetch_xyz(const struct device *dev,
         return status;
     }
 
+    LOG_INF("raw: x[%02x-%02x], y[%02x-%02x], z[%02x-%02x]", 
+        kxtj3->sample.raw[0], kxtj3->sample.raw[1],
+        kxtj3->sample.raw[2], kxtj3->sample.raw[3],
+        kxtj3->sample.raw[4], kxtj3->sample.raw[5]);
+
+
     for (i = 0; i < (3 * sizeof(int16_t)); i += sizeof(int16_t)) {
 
-        int16_t *sample = (int16_t *)&kxtj3->sample.raw[1 + i];
+        int16_t *sample = (int16_t *)&kxtj3->sample.raw[i];
 
         *sample = sys_le16_to_cpu(*sample);
+
+        *sample &= 0b1111111111110000;
     }
 
-#if 0
-    if (kxtj3->sample.status & KXTJ3_STATUS_DRDY_MASK) {
-        status = 0;
-    }
+#if 1
+
+    LOG_INF("samplex: %04x, %04x, %04x", 
+           kxtj3->sample.xyz[0],
+           kxtj3->sample.xyz[1],
+           kxtj3->sample.xyz[2]);
+
+    LOG_INF("sample: %d, %d, %d", 
+           kxtj3->sample.xyz[0],
+           kxtj3->sample.xyz[1],
+           kxtj3->sample.xyz[2]);
+
+    float results[3];
+
+    results[0] = (float) kxtj3->sample.xyz[0] / 2047; //16384;
+    results[1] = (float) kxtj3->sample.xyz[1] / 2047; //16384;
+    results[2] = (float) kxtj3->sample.xyz[2] / 2047; //16384;
+
+    LOG_INF("results: x: %.2g, \ty: %.2g, \tz: %.2g", 
+                     (double)results[0], 
+                     (double)results[1],
+                     (double)results[2]);
 #endif
 
     return status;
@@ -261,6 +320,8 @@ int kxtj3_init(const struct device *dev)
         LOG_ERR("Invalid chip ID: %02x\n", id);
         return -EINVAL;
     }
+
+    kxtj3->scale = KXTJ3_SCALE;
 
     memset(raw, 0, sizeof(raw));
     
