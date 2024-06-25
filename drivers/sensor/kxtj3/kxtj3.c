@@ -93,14 +93,13 @@ static int kxtj3_fetch_xyz(const struct device *dev,
         kxtj3->sample.raw[2], kxtj3->sample.raw[3],
         kxtj3->sample.raw[4], kxtj3->sample.raw[5]);
 
-
     for (i = 0; i < (3 * sizeof(int16_t)); i += sizeof(int16_t)) {
 
         int16_t *sample = (int16_t *)&kxtj3->sample.raw[i];
 
         *sample = sys_le16_to_cpu(*sample);
 
-        *sample &= 0b1111111111110000;
+        *sample &= KXTJ3_MASK;
     }
 
 #if 1
@@ -148,52 +147,12 @@ static int kxtj3_sample_fetch(const struct device *dev,
     return status;
 }
 
-#ifdef CONFIG_LIS2DH_ACCEL_RANGE_RUNTIME
-
-#define KXTJ3_RANGE_IDX_TO_VALUE(idx)      (1 << ((idx) + 1))
-#define KXTJ3_NUM_RANGES           4
-
-static int kxtj3_range_to_reg_val(uint16_t range)
-{
-    int i;
-
-    for (i = 0; i < KXTJ3_NUM_RANGES; i++) {
-        if (range == KXTJ3_RANGE_IDX_TO_VALUE(i)) {
-            return i;
-        }
-    }
-
-    return -EINVAL;
-}
-
-static int kxtj3_acc_range_set(const struct device *dev, int32_t range)
-{
-    struct kxtj3_data *kxtj3 = dev->data;
-    int fs;
-
-    fs = kxtj3_range_to_reg_val(range);
-    if (fs < 0) {
-        return fs;
-    }
-
-    kxtj3->scale = kxtj3_reg_val_to_scale[fs];
-
-    return kxtj3->hw_tf->update_reg(dev, KXTJ3_REG_CTRL4,
-                     KXTJ3_FS_MASK,
-                     (fs << KXTJ3_FS_SHIFT));
-}
-#endif
-
 static int kxtj3_acc_config(const struct device *dev,
                             enum sensor_channel chan,
                             enum sensor_attribute attr,
                             const struct sensor_value *val)
 {
     switch (attr) {
-#ifdef CONFIG_KXTJ3_ACCEL_RANGE_RUNTIME
-    case SENSOR_ATTR_FULL_SCALE:
-        return kxtj3_acc_range_set(dev, sensor_ms2_to_g(val));
-#endif
 #ifdef CONFIG_KXTJ3_ACCEL_HP_FILTERS
     case SENSOR_ATTR_CONFIGURATION:
         return kxtj3_acc_hp_filter_set(dev, val->val1);

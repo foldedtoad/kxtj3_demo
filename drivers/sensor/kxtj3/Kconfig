@@ -45,12 +45,9 @@ config KXTJ3_THREAD_STACK_SIZE
 
 choice KXTJ3_ACCEL_RANGE
 	prompt "Acceleration measurement range"
-	default KXTJ3_ACCEL_RANGE_RUNTIME
+	default KXTJ3_ACCEL_RANGE_2G
 	help
 	  Initial measurement full scale range for acceleration values.
-
-config KXTJ3_ACCEL_RANGE_RUNTIME
-	bool "Set at runtime"
 
 config KXTJ3_ACCEL_RANGE_2G
 	bool "+/-2g"

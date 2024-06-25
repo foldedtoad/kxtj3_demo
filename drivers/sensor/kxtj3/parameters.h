@@ -72,11 +72,11 @@
 #elif defined(CONFIG_KXTJ3_OPER_MODE_HIGH_RES)
                 #define KXTJ3_RESOL_BITS      (KXTJ3_CTRL_REG1_PC + KXTJ3_CTRL_REG1_RES)
                 #define KXTJ3_SCALE           8191
-                #define KXTJ3_MASK            0b111111111ç1111100
+                #define KXTJ3_MASK            0b1111111111111100
 #else
                 #define KXTJ3_RESOL_BITS      0xFF
                 #define KXTJ3_SCALE           0
-                #define KXTJ3_MASK            0b00000000000000000
+                #define KXTJ3_MASK            0b0000000000000000
 #endif
 
 
