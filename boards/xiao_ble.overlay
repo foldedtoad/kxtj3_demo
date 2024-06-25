@@ -40,8 +40,8 @@ arduino_i2c: &i2c0 {
         #io-channel-cells = <1>;
         #address-cells = <1>;
         #size-cells = <0>;
-        //irq-gpios = <&gpio0 29 0>;
-        //anym-on-int;
-        //anym-mode = <KXTJ3_DT_ANYM_6D_MOVEMENT>;
+        irq-gpios = <&gpio0 29 0>;
+        anym-on-int;
+        anym-mode = <KXTJ3_DT_ANYM_6D_MOVEMENT>;
     };
 };

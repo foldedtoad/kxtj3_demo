@@ -4,7 +4,7 @@
 menuconfig KXTJ3
 	bool "KXTJ3 Three Axis Accelerometer"
 	default y
-	#depends on DT_HAS_KXTJ3_ENABLED
+	depends on DT_HAS_KIONIX_KXTJ3_ENABLED
 	select I2C if $(dt_compat_on_bus,$(DT_COMPAT_KIONIX_KXTJ3),i2c)
 	help
 	  Enable I2C-based driver for KXTJ3 triaxial accelerometer sensors.

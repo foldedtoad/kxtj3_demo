@@ -20,7 +20,7 @@
 #define KXTJ3_WHO_AM_I               0x0F
 #define KXTJ3_WHO_AM_I_VALUE         0x35
 
-#define KXTJ3_DCST_RESP              0x0C 
+#define KXTJ3_DCST_RESP              0x0C
 
 #define KXTJ3_OUT_X_L                0x06
 #define KXTJ3_OUT_X_H                0x07
@@ -43,15 +43,42 @@
 #define KXTJ3_CTRL_REG1_EN16G        0x04
 #define KXTJ3_CTRL_REG1_WUFE         0x02
 
-#define KXTJ3_CTRL_REG2              0x1D 
-#define KXTJ3_INT_CTRL_REG1          0x1E   
-#define KXTJ3_INT_CTRL_REG2          0x1F   
-#define KXTJ3_DATA_CTRL_REG          0x21   
-#define KXTJ3_WAKEUP_COUNTER         0x29   
-#define KXTJ3_NA_COUNTER             0x2A   
+#define KXTJ3_CTRL_REG2              0x1D
+#define KXTJ3_INT_CTRL_REG1          0x1E
+#define KXTJ3_INT_CTRL_REG1_IEN      0x20
+#define KXTJ3_INT_CTRL_REG1_IEA      0x10
+#define KXTJ3_INT_CTRL_REG1_IEL      0x08
+#define KXTJ3_INT_CTRL_REG1_STPOL    0x02
+
+#define KXTJ3_INT_CTRL_REG2          0x1F
+#define KXTJ3_INT_CTRL_REG2_ULMODE   0x80
+#define KXTJ3_INT_CTRL_REG2_XNWUAE   0x20
+#define KXTJ3_INT_CTRL_REG2_XPWUAE   0x10
+
+#define KXTJ3_INT_CTRL_REG2_YNWUAE   0x08
+#define KXTJ3_INT_CTRL_REG2_YPWUAE   0x04
+#define KXTJ3_INT_CTRL_REG2_ZNWUAE   0x02
+#define KXTJ3_INT_CTRL_REG2_ZPWUAE   0x01
+
+#define KXTJ3_DATA_CTRL_REG          0x21
+#define KXTJ3_DATA_CTRL_REG_0p781_HZ 0x08
+#define KXTJ3_DATA_CTRL_REG_1p563_HZ 0x09
+#define KXTJ3_DATA_CTRL_REG_3p125_HZ 0x0A
+#define KXTJ3_DATA_CTRL_REG_6p25_HZ  0x0B
+#define KXTJ3_DATA_CTRL_REG_12p5_HZ  0x00
+#define KXTJ3_DATA_CTRL_REG_25_HZ    0x01
+#define KXTJ3_DATA_CTRL_REG_50_HZ    0x02
+#define KXTJ3_DATA_CTRL_REG_100_HZ   0x03
+#define KXTJ3_DATA_CTRL_REG_200_HZ   0x04
+#define KXTJ3_DATA_CTRL_REG_400_HZ   0x05
+#define KXTJ3_DATA_CTRL_REG_800_HZ   0x06
+#define KXTJ3_DATA_CTRL_REG_1600_HZ  0x07
+
+#define KXTJ3_WAKEUP_COUNTER         0x29
+#define KXTJ3_NA_COUNTER             0x2A
 #define KXTJ3_SELF_TEST              0x3A
-#define KXTJ3_WAKEUP_THRD_H          0x6A   
-#define KXTJ3_WAKEUP_THRD_L          0x6B   
+#define KXTJ3_WAKEUP_THRD_H          0x6A
+#define KXTJ3_WAKEUP_THRD_L          0x6B
 
 
 

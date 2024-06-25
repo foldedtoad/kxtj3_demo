@@ -13,6 +13,7 @@
 LOG_MODULE_REGISTER(kxtj3_trigger);
 
 #include "kxtj3.h"
+#include "parameters.h"
 
 #define START_TRIG_INT         0
 #define TRIGGED_INT            4
@@ -38,8 +39,10 @@ static int kxtj3_trigger_drdy_set(const struct device *dev,
                    sensor_trigger_handler_t handler,
                    const struct sensor_trigger *trig)
 {
-    const struct kxtj3_config *cfg = dev->config;
     struct kxtj3_data *kxtj3 = dev->data;
+
+#if 0  // temp
+    const struct kxtj3_config *cfg = dev->config;
     int status;
 
     if (cfg->gpio_drdy.port == NULL) {
@@ -66,6 +69,8 @@ static int kxtj3_trigger_drdy_set(const struct device *dev,
      * and first interrupt. this avoids concurrent bus context access.
      */
     atomic_set_bit(&kxtj3->trig_flags, START_TRIG_INT);
+#endif  // temp
+
 #if defined(CONFIG_KXTJ3_TRIGGER_THREAD) 
     k_work_submit(&kxtj3->work);
 #endif
@@ -76,46 +81,30 @@ static int kxtj3_trigger_drdy_set(const struct device *dev,
 static int kxtj3_start_trigger_int(const struct device *dev)
 {
     int status;
-    uint8_t raw[KXTJ3_BUF_SZ];
-    uint8_t ctrl1 = 0U;
     struct kxtj3_data *kxtj3 = dev->data;
+    uint8_t reg[1];
 
-    /* power down temporarily to align interrupt & data output sampling */
-    status = kxtj3->hw_tf->read_reg(dev, KXTJ3_REG_CTRL1, &ctrl1);
-    if (unlikely(status < 0)) {
-        return status;
-    }
-    status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1, ctrl1 & ~KXTJ3_ODR_MASK);
-
-    if (unlikely(status < 0)) {
+    reg[0] = 0;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
         return status;
     }
 
-    LOG_DBG("ctrl1=0x%x @tick=%u", ctrl1, k_cycle_get_32());
-
-    /* empty output data */
-    status = kxtj3->hw_tf->read_data(dev, KXTJ3_REG_STATUS,
-                      raw, sizeof(raw));
-    if (unlikely(status < 0)) {
+    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_RESOL_BITS | KXTJ3_CTRL_REG1_DRDYE;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
         return status;
     }
 
-    setup_int(dev, true);
-
-    /* re-enable output sampling */
-    status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1, ctrl1);
-    if (unlikely(status < 0)) {
-        return status;
-    }
-
-    return kxtj3->hw_tf->update_reg(dev, KXTJ3_REG_CTRL3,
-                                    KXTJ3_EN_DRDY1_INT,
-                                    KXTJ3_EN_DRDY1_INT);
+    return status;
 }
+
+
 
 #define KXTJ3_ANYM_CFG (KXTJ3_INT_CFG_ZHIE_ZUPE | \
                         KXTJ3_INT_CFG_YHIE_YUPE | \
                         KXTJ3_INT_CFG_XHIE_XUPE)
+
 
 static int kxtj3_trigger_anym_tap_set(const struct device *dev,
                                       sensor_trigger_handler_t handler,
@@ -123,13 +112,15 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
 {
     const struct kxtj3_config *cfg = dev->config;
     struct kxtj3_data *kxtj3 = dev->data;
-    int status;
-    uint8_t reg_val;
 
     if (cfg->gpio_int.port == NULL) {
         LOG_ERR("trigger_set AnyMotion int not supported");
         return -ENOTSUP;
     }
+
+#if 0  // temp
+    int status;
+    uint8_t reg_val;
 
     if (cfg->hw.anym_on_int) {
         status = kxtj3->hw_tf->update_reg(dev, KXTJ3_REG_CTRL3, KXTJ3_EN_DRDY1_INT, 0);
@@ -158,6 +149,8 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
     if ((handler == NULL) || (status < 0)) {
         return status;
     }
+#endif  // temp
+
 
 #if defined(CONFIG_KXTJ3_TRIGGER_THREAD)
     k_work_submit(&kxtj3->work);
@@ -168,13 +161,6 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
 static int kxtj3_trigger_anym_set(const struct device *dev,
                    sensor_trigger_handler_t handler,
                    const struct sensor_trigger *trig)
-{
-    return kxtj3_trigger_anym_tap_set(dev, handler, trig);
-}
-
-static int kxtj3_trigger_tap_set(const struct device *dev,
-                  sensor_trigger_handler_t handler,
-                  const struct sensor_trigger *trig)
 {
     return kxtj3_trigger_anym_tap_set(dev, handler, trig);
 }
@@ -190,9 +176,6 @@ int kxtj3_trigger_set(const struct device *dev,
     else if (trig->type == SENSOR_TRIG_DELTA) {
         return kxtj3_trigger_anym_set(dev, handler, trig);
     } 
-    else if (trig->type == SENSOR_TRIG_TAP) {
-        return kxtj3_trigger_tap_set(dev, handler, trig);
-    }
 
     return -ENOTSUP;
 }
@@ -210,7 +193,7 @@ int kxtj3_acc_hp_filter_set(const struct device *dev, int32_t val)
 
     return status;
 }
-#endif
+#endif // CONFIG_KXTJ3_ACCEL_HP_FILTERS
 
 static void kxtj3_gpio_int_callback(const struct device *dev,
                                     struct gpio_callback *cb, uint32_t pins)
@@ -277,7 +260,8 @@ int kxtj3_init_interrupt(const struct device *dev)
     struct kxtj3_data *kxtj3 = dev->data;
     const struct kxtj3_config *cfg = dev->config;
     int status;
-    uint8_t raw[2];
+    uint8_t reg[1];
+
 
     kxtj3->dev = dev;
 
@@ -288,6 +272,34 @@ int kxtj3_init_interrupt(const struct device *dev)
     /*
      * Setup INT (for DRDY) if defined in DT
      */
+
+    reg[0] = 0;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        LOG_ERR("Failed to go to standby mode.");
+        return status;
+    }
+
+    reg[0] = KXTJ3_DATA_CTRL_REG_200_HZ;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA | KXTJ3_INT_CTRL_REG1_IEL;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = KXTJ3_INT_CTRL_REG2_XNWUAE | KXTJ3_INT_CTRL_REG2_XPWUAE |   
+             KXTJ3_INT_CTRL_REG2_YNWUAE | KXTJ3_INT_CTRL_REG2_YPWUAE |   
+             KXTJ3_INT_CTRL_REG2_ZNWUAE | KXTJ3_INT_CTRL_REG2_ZPWUAE ;  
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG2, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
 
     /* setup data ready gpio interrupt */
     if (!gpio_is_ready_dt(&cfg->gpio_drdy)) {
@@ -353,6 +365,9 @@ check_gpio_int:
     gpio_init_callback(&kxtj3->gpio_int_cb, kxtj3_gpio_int_callback,
                        BIT(cfg->gpio_int.pin));
 
+#if 0 // temp
+
+
     /* disable interrupt in case of warm (re)boot */
     status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_INT_CFG, 0);
     if (status < 0) {
@@ -376,6 +391,7 @@ check_gpio_int:
         /* latch line interrupt */
         status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL5, KXTJ3_EN_LIR_INT);
     }
+#endif // temp
 
     if (status < 0) {
         LOG_ERR("enable reg write failed (%d)", status);

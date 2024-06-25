@@ -199,7 +199,7 @@ int kxtj3_init(const struct device *dev)
     const struct kxtj3_config *cfg = dev->config;
     int status;
     uint8_t id;
-    uint8_t raw[6];
+    uint8_t raw[1];
 
     status = cfg->bus_init(dev);
     if (status < 0) {
@@ -218,8 +218,7 @@ int kxtj3_init(const struct device *dev)
 
     kxtj3->scale = KXTJ3_SCALE;
 
-    memset(raw, 0, sizeof(raw));
-    
+    raw[0] = 0;    
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, raw, 1);
     if (status < 0) {
         LOG_ERR("Failed to go to standby mode.");
@@ -234,12 +233,22 @@ int kxtj3_init(const struct device *dev)
         return status;
     }
 
-    raw[0] = KXTJ3_CTRL_REG1_PC + KXTJ3_CTRL_REG1_RES;
+    raw[0] = KXTJ3_CTRL_REG1_PC + KXTJ3_RESOL_BITS;
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, raw, 1);
     if (status < 0) {
         LOG_ERR("Failed to go to operating mode.");
         return status;
     }
+
+#ifdef CONFIG_KXTJ3_TRIGGER
+    if (cfg->gpio_drdy.port != NULL || cfg->gpio_int.port != NULL) {
+        status = kxtj3_init_interrupt(dev);
+        if (status < 0) {
+            LOG_ERR("Failed to initialize interrupts.");
+            return status;
+        }
+    }
+#endif
 
     return 0;
 
@@ -309,9 +318,6 @@ static int kxtj3_pm_action(const struct device *dev,
                 POST_KERNEL,                           \
                 CONFIG_SENSOR_INIT_PRIORITY,           \
                 &kxtj3_driver_api);
-
-#define IS_LSM303AGR_DEV(inst) \
-    DT_NODE_HAS_COMPAT(DT_DRV_INST(inst), st_lsm303agr_accel)
 
 #define ANYM_ON_INT(inst) \
     DT_INST_PROP(inst, anym_on_int)
