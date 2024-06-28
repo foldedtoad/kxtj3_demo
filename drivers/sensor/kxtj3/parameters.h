@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "kxtj3.h"
+
 /*
  *  Convert Kconfig defines to kxtj3 ODR bits
  */

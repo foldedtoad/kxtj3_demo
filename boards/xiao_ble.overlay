@@ -41,6 +41,7 @@ arduino_i2c: &i2c0 {
         #address-cells = <1>;
         #size-cells = <0>;
         irq-gpios = <&gpio0 29 0>;
+        int-gpio-config = <KXTJ3_DT_GPIO_INT_EDGE>;
         anym-on-int;
         anym-mode = <KXTJ3_DT_ANYM_6D_MOVEMENT>;
     };

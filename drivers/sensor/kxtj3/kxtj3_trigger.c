@@ -202,6 +202,8 @@ static void kxtj3_gpio_int_callback(const struct device *dev,
 
     ARG_UNUSED(pins);
 
+    LOG_INF("%s", __func__);
+
     atomic_set_bit(&kxtj3->trig_flags, TRIGGED_INT);
 
     /* int is level triggered so disable until processed */
@@ -217,6 +219,8 @@ static void kxtj3_thread_cb(const struct device *dev)
     struct kxtj3_data *kxtj3 = dev->data;
     const struct kxtj3_config *cfg = dev->config;
     int status;
+
+    LOG_INF("%s", __func__);
 
     if (cfg->gpio_drdy.port &&
         unlikely(atomic_test_and_clear_bit(&kxtj3->trig_flags, START_TRIG_INT))) {
@@ -251,6 +255,8 @@ static void kxtj3_work_cb(struct k_work *work)
 {
     struct kxtj3_data *kxtj3 = CONTAINER_OF(work, struct kxtj3_data, work);
 
+    LOG_INF("%s", __func__);
+
     kxtj3_thread_cb(kxtj3->dev);
 }
 #endif
@@ -271,6 +277,84 @@ int kxtj3_init_interrupt(const struct device *dev)
 
     /*
      * Setup INT (for DRDY) if defined in DT
+     */
+
+    /* setup data ready gpio interrupt */
+    if (!gpio_is_ready_dt(&cfg->gpio_drdy)) {
+        /* API may return false even when ptr is NULL */
+        if (cfg->gpio_drdy.port != NULL) {
+            LOG_ERR("device %s is not ready", cfg->gpio_drdy.port->name);
+            return -ENODEV;
+        }
+
+        LOG_INF("gpio_drdy not defined in DT");
+        status = 0;
+        goto check_gpio_int;
+    }
+
+    gpio_pin_interrupt_configure_dt(&cfg->gpio_drdy, GPIO_INT_EDGE_RISING);
+
+    /* data ready int gpio configuration */
+    status = gpio_pin_configure_dt(&cfg->gpio_drdy, GPIO_INPUT);
+    if (status < 0) {
+        LOG_ERR("Could not configure %s.%02u",
+            cfg->gpio_drdy.port->name, cfg->gpio_drdy.pin);
+        return status;
+    }
+
+    gpio_init_callback(&kxtj3->gpio_int_cb,
+                       kxtj3_gpio_int_callback,
+                       BIT(cfg->gpio_drdy.pin));
+
+    status = gpio_add_callback(cfg->gpio_drdy.port,
+                               &kxtj3->gpio_int_cb);
+    if (status < 0) {
+        LOG_ERR("Could not add gpio int callback");
+        return status;
+    }
+
+    LOG_INF("%s: int on %s.%02u", dev->name,
+                       cfg->gpio_drdy.port->name,
+                       cfg->gpio_drdy.pin);
+
+check_gpio_int:
+    /*
+     * Setup Interrupt (for Any Motion) if defined in DT
+     */
+
+    /* setup any motion gpio interrupt */
+    if (!gpio_is_ready_dt(&cfg->gpio_int)) {
+        /* API may return false even when ptr is NULL */
+        if (cfg->gpio_int.port != NULL) {
+            LOG_ERR("device %s is not ready", cfg->gpio_int.port->name);
+            return -ENODEV;
+        }
+
+        LOG_INF("gpio_int not defined in DT");
+        status = 0;
+        goto end;
+    }
+
+    gpio_pin_interrupt_configure_dt(&cfg->gpio_int, GPIO_INT_EDGE_RISING);
+
+
+    /* any motion int gpio configuration */
+    status = gpio_pin_configure_dt(&cfg->gpio_int, GPIO_INPUT);
+    if (status < 0) {
+        LOG_ERR("Could not configure %s.%02u",
+            cfg->gpio_int.port->name, cfg->gpio_int.pin);
+        return status;
+    }
+
+    gpio_init_callback(&kxtj3->gpio_int_cb, kxtj3_gpio_int_callback,
+                       BIT(cfg->gpio_int.pin));
+
+    LOG_INF("%s: int on %s.%02u", dev->name,
+                       cfg->gpio_int.port->name,
+                       cfg->gpio_int.pin);
+
+    /* 
+     *  Configure KXTJ3 for wake-up events.
      */
 
     reg[0] = 0;    
@@ -300,98 +384,23 @@ int kxtj3_init_interrupt(const struct device *dev)
         return status;
     }
 
-
-    /* setup data ready gpio interrupt */
-    if (!gpio_is_ready_dt(&cfg->gpio_drdy)) {
-        /* API may return false even when ptr is NULL */
-        if (cfg->gpio_drdy.port != NULL) {
-            LOG_ERR("device %s is not ready", cfg->gpio_drdy.port->name);
-            return -ENODEV;
-        }
-
-        LOG_DBG("gpio_drdy not defined in DT");
-        status = 0;
-        goto check_gpio_int;
-    }
-
-    /* data ready int gpio configuration */
-    status = gpio_pin_configure_dt(&cfg->gpio_drdy, GPIO_INPUT);
+    reg[0] = KXTJ3_CTRL_REG2_6p25_HZ;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
     if (status < 0) {
-        LOG_ERR("Could not configure %s.%02u",
-            cfg->gpio_drdy.port->name, cfg->gpio_drdy.pin);
         return status;
     }
 
-    gpio_init_callback(&kxtj3->gpio_int_cb,
-               kxtj3_gpio_int_callback,
-               BIT(cfg->gpio_drdy.pin));
-
-    status = gpio_add_callback(cfg->gpio_drdy.port, &kxtj3->gpio_int_cb);
+    reg[0] = 0x08;  // how to calculate this?
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_THRD_H, reg, sizeof(reg));
     if (status < 0) {
-        LOG_ERR("Could not add gpio int callback");
         return status;
     }
 
-    LOG_INF("%s: int on %s.%02u", dev->name,
-                       cfg->gpio_drdy.port->name,
-                       cfg->gpio_drdy.pin);
-
-check_gpio_int:
-    /*
-     * Setup Interrupt (for Any Motion) if defined in DT
-     */
-
-    /* setup any motion gpio interrupt */
-    if (!gpio_is_ready_dt(&cfg->gpio_int)) {
-        /* API may return false even when ptr is NULL */
-        if (cfg->gpio_int.port != NULL) {
-            LOG_ERR("device %s is not ready", cfg->gpio_int.port->name);
-            return -ENODEV;
-        }
-
-        LOG_DBG("gpio_int not defined in DT");
-        status = 0;
-        goto end;
-    }
-
-    /* any motion int gpio configuration */
-    status = gpio_pin_configure_dt(&cfg->gpio_int, GPIO_INPUT);
+    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_RESOL_BITS | KXTJ3_CTRL_REG1_WUFE;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
-        LOG_ERR("Could not configure %s.%02u",
-            cfg->gpio_int.port->name, cfg->gpio_int.pin);
         return status;
     }
-
-    gpio_init_callback(&kxtj3->gpio_int_cb, kxtj3_gpio_int_callback,
-                       BIT(cfg->gpio_int.pin));
-
-#if 0 // temp
-
-
-    /* disable interrupt in case of warm (re)boot */
-    status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_INT_CFG, 0);
-    if (status < 0) {
-        LOG_ERR("Interrupt disable reg write failed (%d)", status);
-        return status;
-    }
-    status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CFG_CLICK, 0);
-    if (status < 0) {
-        LOG_ERR("Interrupt disable reg write failed (%d)", status);
-        return status;
-    }
-
-    (void)memset(raw, 0, sizeof(raw));
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_REG_INT_THS, raw, sizeof(raw));
-    if (status < 0) {
-        LOG_ERR("Burst write to THS failed (%d)", status);
-        return status;
-    }
-
-    if (cfg->hw.anym_latch) {
-        /* latch line interrupt */
-        status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL5, KXTJ3_EN_LIR_INT);
-    }
-#endif // temp
 
     if (status < 0) {
         LOG_ERR("enable reg write failed (%d)", status);

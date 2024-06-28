@@ -76,21 +76,6 @@ int main(void)
         trig.type = SENSOR_TRIG_DATA_READY;
         trig.chan = SENSOR_CHAN_ACCEL_XYZ;
 
-        if (IS_ENABLED(CONFIG_KXTJ3_ODR_RUNTIME)) {
-            struct sensor_value odr = {
-                .val1 = 1,
-            };
-
-            rc = sensor_attr_set(sensor, trig.chan,
-                         SENSOR_ATTR_SAMPLING_FREQUENCY,
-                         &odr);
-            if (rc != 0) {
-                LOG_ERR("Failed to set odr: %d", rc);
-                return 0;
-            }
-            LOG_INF("Sampling at %u Hz", odr.val1);
-        }
-
         rc = sensor_trigger_set(sensor, &trig, trigger_handler);
         if (rc != 0) {
             LOG_ERR("Failed to set trigger: %d", rc);
