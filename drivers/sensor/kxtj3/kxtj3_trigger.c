@@ -41,6 +41,8 @@ static int kxtj3_trigger_drdy_set(const struct device *dev,
 {
     struct kxtj3_data *kxtj3 = dev->data;
 
+    LOG_INF("%s", __func__);
+
 #if 0  // temp
     const struct kxtj3_config *cfg = dev->config;
     int status;
@@ -84,6 +86,8 @@ static int kxtj3_start_trigger_int(const struct device *dev)
     struct kxtj3_data *kxtj3 = dev->data;
     uint8_t reg[1];
 
+    LOG_INF("%s", __func__);
+
     reg[0] = 0;
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
@@ -112,45 +116,60 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
 {
     const struct kxtj3_config *cfg = dev->config;
     struct kxtj3_data *kxtj3 = dev->data;
+    int status;
+    uint8_t reg[1];
 
     if (cfg->gpio_int.port == NULL) {
         LOG_ERR("trigger_set AnyMotion int not supported");
         return -ENOTSUP;
     }
 
-#if 0  // temp
-    int status;
-    uint8_t reg_val;
+    LOG_INF("%s", __func__);
 
-    if (cfg->hw.anym_on_int) {
-        status = kxtj3->hw_tf->update_reg(dev, KXTJ3_REG_CTRL3, KXTJ3_EN_DRDY1_INT, 0);
-    }
-
-    /* disable any movement interrupt events */
-    status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_INT_CFG, 0);
-
-    /* disable any click interrupt events */
-    status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CFG_CLICK, 0);
-
-    /* make sure any pending interrupt is cleared */
-    status = kxtj3->hw_tf->read_reg(dev, KXTJ3_REG_INT_SRC, &reg_val);
-
-    status = kxtj3->hw_tf->read_reg(dev, KXTJ3_REG_CLICK_SRC, &reg_val);
-
-    if (trig->type == SENSOR_TRIG_DELTA) {
-        kxtj3->handler_anymotion = handler;
-        kxtj3->trig_anymotion = trig;
-    } 
-    else if (trig->type == SENSOR_TRIG_TAP) {
-        kxtj3->handler_tap = handler;
-        kxtj3->trig_tap = trig;
-    }
-
-    if ((handler == NULL) || (status < 0)) {
+    reg[0] = 0;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        LOG_ERR("Failed to go to standby mode.");
         return status;
     }
-#endif  // temp
 
+    reg[0] = KXTJ3_DATA_CTRL_REG_200_HZ;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA | KXTJ3_INT_CTRL_REG1_IEL;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = KXTJ3_INT_CTRL_REG2_XNWUAE | KXTJ3_INT_CTRL_REG2_XPWUAE |   
+             KXTJ3_INT_CTRL_REG2_YNWUAE | KXTJ3_INT_CTRL_REG2_YPWUAE |   
+             KXTJ3_INT_CTRL_REG2_ZNWUAE | KXTJ3_INT_CTRL_REG2_ZPWUAE ;  
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG2, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = KXTJ3_CTRL_REG2_6p25_HZ;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = 0x08;  // how to calculate this?
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_THRD_H, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_RESOL_BITS | KXTJ3_CTRL_REG1_WUFE;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
 
 #if defined(CONFIG_KXTJ3_TRIGGER_THREAD)
     k_work_submit(&kxtj3->work);
@@ -266,8 +285,6 @@ int kxtj3_init_interrupt(const struct device *dev)
     struct kxtj3_data *kxtj3 = dev->data;
     const struct kxtj3_config *cfg = dev->config;
     int status;
-    uint8_t reg[1];
-
 
     kxtj3->dev = dev;
 
@@ -313,7 +330,7 @@ int kxtj3_init_interrupt(const struct device *dev)
         return status;
     }
 
-    LOG_INF("%s: int on %s.%02u", dev->name,
+    LOG_INF("%s: DRDY int on %s.%02u", dev->name,
                        cfg->gpio_drdy.port->name,
                        cfg->gpio_drdy.pin);
 
@@ -335,9 +352,6 @@ check_gpio_int:
         goto end;
     }
 
-    gpio_pin_interrupt_configure_dt(&cfg->gpio_int, GPIO_INT_EDGE_RISING);
-
-
     /* any motion int gpio configuration */
     status = gpio_pin_configure_dt(&cfg->gpio_int, GPIO_INPUT);
     if (status < 0) {
@@ -346,66 +360,17 @@ check_gpio_int:
         return status;
     }
 
-    gpio_init_callback(&kxtj3->gpio_int_cb, kxtj3_gpio_int_callback,
+    gpio_init_callback(&kxtj3->gpio_int_cb,
+                       kxtj3_gpio_int_callback,
                        BIT(cfg->gpio_int.pin));
+
+    gpio_add_callback_dt(&cfg->gpio_int, &kxtj3->gpio_int_cb);
+
+    gpio_pin_interrupt_configure_dt(&cfg->gpio_int, GPIO_INT_EDGE_RISING);
 
     LOG_INF("%s: int on %s.%02u", dev->name,
                        cfg->gpio_int.port->name,
                        cfg->gpio_int.pin);
-
-    /* 
-     *  Configure KXTJ3 for wake-up events.
-     */
-
-    reg[0] = 0;    
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
-    if (status < 0) {
-        LOG_ERR("Failed to go to standby mode.");
-        return status;
-    }
-
-    reg[0] = KXTJ3_DATA_CTRL_REG_200_HZ;    
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA | KXTJ3_INT_CTRL_REG1_IEL;    
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG1, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    reg[0] = KXTJ3_INT_CTRL_REG2_XNWUAE | KXTJ3_INT_CTRL_REG2_XPWUAE |   
-             KXTJ3_INT_CTRL_REG2_YNWUAE | KXTJ3_INT_CTRL_REG2_YPWUAE |   
-             KXTJ3_INT_CTRL_REG2_ZNWUAE | KXTJ3_INT_CTRL_REG2_ZPWUAE ;  
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG2, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    reg[0] = KXTJ3_CTRL_REG2_6p25_HZ;
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    reg[0] = 0x08;  // how to calculate this?
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_THRD_H, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_RESOL_BITS | KXTJ3_CTRL_REG1_WUFE;    
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    if (status < 0) {
-        LOG_ERR("enable reg write failed (%d)", status);
-        return status;
-    }
 
 end:
     return status;

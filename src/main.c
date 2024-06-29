@@ -48,9 +48,11 @@ static void fetch_and_display(const struct device *sensor)
 }
 
 #ifdef CONFIG_KXTJ3_TRIGGER
-static void trigger_handler(const struct device *dev,
+static void trigger_callback(const struct device *dev,
                 const struct sensor_trigger *trig)
 {
+    LOG_INF("%s", __func__);
+
     fetch_and_display(dev);
 }
 #endif
@@ -73,10 +75,16 @@ int main(void)
         struct sensor_trigger trig;
         int rc;
 
+#if 0
+        /* normal x,y,z output */
         trig.type = SENSOR_TRIG_DATA_READY;
         trig.chan = SENSOR_CHAN_ACCEL_XYZ;
-
-        rc = sensor_trigger_set(sensor, &trig, trigger_handler);
+#else
+        /* Any-Motion output */
+        trig.type = SENSOR_TRIG_DELTA;
+        trig.chan = SENSOR_CHAN_ACCEL_XYZ;
+#endif
+        rc = sensor_trigger_set(sensor, &trig, trigger_callback);
         if (rc != 0) {
             LOG_ERR("Failed to set trigger: %d", rc);
             return 0;
