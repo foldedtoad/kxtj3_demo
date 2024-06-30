@@ -153,8 +153,6 @@ struct kxtj3_data {
     const struct sensor_trigger *trig_drdy;
     sensor_trigger_handler_t handler_anymotion;
     const struct sensor_trigger *trig_anymotion;
-    sensor_trigger_handler_t handler_tap;
-    const struct sensor_trigger *trig_tap;
     atomic_t trig_flags;
     enum sensor_channel chan_drdy;
 

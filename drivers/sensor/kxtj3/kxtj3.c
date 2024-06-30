@@ -336,11 +336,11 @@ static int kxtj3_pm_action(const struct device *dev,
 
 #define KXTJ3_CFG_INT(inst)                                         \
     .gpio_drdy =                                                    \
-        COND_CODE_1(ANYM_ON_INT(inst),                             \
+        COND_CODE_1(ANYM_ON_INT(inst),                              \
         ({.port = NULL, .pin = 0, .dt_flags = 0}),                  \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0))),   \
     .gpio_int =                                                     \
-        COND_CODE_1(ANYM_ON_INT(inst),                             \
+        COND_CODE_1(ANYM_ON_INT(inst),                              \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0)),    \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 1))),   \
     .int_mode = DT_INST_PROP(inst, int_gpio_config)

@@ -12,7 +12,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main);
 
-static void fetch_and_display(const struct device *sensor)
+void fetch_and_display(const struct device *sensor)
 {
     static unsigned int count;
     struct sensor_value accel[3];
@@ -48,14 +48,25 @@ static void fetch_and_display(const struct device *sensor)
 }
 
 #ifdef CONFIG_KXTJ3_TRIGGER
-static void trigger_callback(const struct device *dev,
+
+#if 0
+static void trigger_data_callback(const struct device *dev,
                 const struct sensor_trigger *trig)
 {
     LOG_INF("%s", __func__);
 
     fetch_and_display(dev);
 }
+#else
+
+static void trigger_anymotion_callback(const struct device *dev,
+                const struct sensor_trigger *trig)
+{
+    LOG_INF("%s", __func__);
+}
 #endif
+
+#endif // CONFIG_KXTJ3_TRIGGER
 
 int main(void)
 {
@@ -79,17 +90,23 @@ int main(void)
         /* normal x,y,z output */
         trig.type = SENSOR_TRIG_DATA_READY;
         trig.chan = SENSOR_CHAN_ACCEL_XYZ;
-#else
-        /* Any-Motion output */
-        trig.type = SENSOR_TRIG_DELTA;
-        trig.chan = SENSOR_CHAN_ACCEL_XYZ;
-#endif
-        rc = sensor_trigger_set(sensor, &trig, trigger_callback);
+
+        rc = sensor_trigger_set(sensor, &trig, trigger_data_callback);
         if (rc != 0) {
             LOG_ERR("Failed to set trigger: %d", rc);
             return 0;
         }
+#else
+        /* Any-Motion output */
+        trig.type = SENSOR_TRIG_DELTA;
+        trig.chan = SENSOR_CHAN_ACCEL_XYZ;
 
+        rc = sensor_trigger_set(sensor, &trig, trigger_anymotion_callback);
+        if (rc != 0) {
+            LOG_ERR("Failed to set trigger: %d", rc);
+            return 0;
+        }
+#endif
         LOG_INF("Waiting for triggers");
         while (true) {
             k_sleep(K_MSEC(2000));

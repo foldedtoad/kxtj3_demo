@@ -26,12 +26,42 @@ static const gpio_flags_t gpio_int_cfg[5] = {
     GPIO_INT_LEVEL_LOW,
 };
 
+static const char * gpio_int_cfg_tags[5] = {
+    "EDGE",
+    "EDGE_RISING",
+    "EDGE_FALLING",
+    "LEVEL_HIGH",
+    "LEVEL_LOW",
+};
+
 static inline void setup_int(const struct device *dev, bool enable)
 {
     const struct kxtj3_config *cfg = dev->config;
 
-    gpio_pin_interrupt_configure_dt(&cfg->gpio_drdy,
-                    enable ? gpio_int_cfg[cfg->int_mode] : GPIO_INT_DISABLE);
+    if (cfg->gpio_drdy.port) {
+        LOG_INF("%s DRDY interrupt %s: %s",__func__, 
+            enable ? "enable" : "disable",
+            enable ? gpio_int_cfg_tags[cfg->int_mode] : "");
+
+        gpio_pin_interrupt_configure_dt(&cfg->gpio_drdy,
+                                        enable ? gpio_int_cfg[cfg->int_mode] : 
+                                                 GPIO_INT_DISABLE);
+        return;
+    }
+
+    if (cfg->gpio_int.port ) {
+
+        LOG_INF("%s INT interrupt %s: %s",__func__, 
+            enable ? "enable" : "disable",
+            enable ? gpio_int_cfg_tags[cfg->int_mode] : "");
+
+        gpio_pin_interrupt_configure_dt(&cfg->gpio_int,
+                                        enable ? gpio_int_cfg[cfg->int_mode] : 
+                                                 GPIO_INT_DISABLE);
+        return;
+    }
+
+    LOG_ERR("error ****");
 }
 
 static int kxtj3_trigger_drdy_set(const struct device *dev,
@@ -39,25 +69,10 @@ static int kxtj3_trigger_drdy_set(const struct device *dev,
                    sensor_trigger_handler_t handler,
                    const struct sensor_trigger *trig)
 {
+    int status = 0;
     struct kxtj3_data *kxtj3 = dev->data;
 
     LOG_INF("%s", __func__);
-
-#if 0  // temp
-    const struct kxtj3_config *cfg = dev->config;
-    int status;
-
-    if (cfg->gpio_drdy.port == NULL) {
-        LOG_ERR("trigger_set DRDY int not supported");
-        return -ENOTSUP;
-    }
-
-    setup_int(dev, false);
-
-    /* cancel potentially pending trigger */
-    atomic_clear_bit(&kxtj3->trig_flags, TRIGGED_INT);
-
-    status = kxtj3->hw_tf->update_reg(dev, KXTJ3_REG_CTRL3, KXTJ3_EN_DRDY1_INT, 0);
 
     kxtj3->handler_drdy = handler;
     kxtj3->trig_drdy = trig;
@@ -71,7 +86,6 @@ static int kxtj3_trigger_drdy_set(const struct device *dev,
      * and first interrupt. this avoids concurrent bus context access.
      */
     atomic_set_bit(&kxtj3->trig_flags, START_TRIG_INT);
-#endif  // temp
 
 #if defined(CONFIG_KXTJ3_TRIGGER_THREAD) 
     k_work_submit(&kxtj3->work);
@@ -171,6 +185,11 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
         return status;
     }
 
+    if (trig->type == SENSOR_TRIG_DELTA) {
+        kxtj3->handler_anymotion = handler;
+        kxtj3->trig_anymotion = trig;
+    } 
+
 #if defined(CONFIG_KXTJ3_TRIGGER_THREAD)
     k_work_submit(&kxtj3->work);
 #endif
@@ -253,28 +272,51 @@ static void kxtj3_thread_cb(const struct device *dev)
     }
 
     if (cfg->gpio_drdy.port &&
-            atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
+        atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
+
+        LOG_INF("%s: DRDY callback", __func__);
+
         if (likely(kxtj3->handler_drdy != NULL)) {
             kxtj3->handler_drdy(dev, kxtj3->trig_drdy);
         }
 
-        /* Reactivate level triggered interrupt if handler did not
-         * disable itself
+        /* 
+         *  Reactivate level triggered interrupt if handler did not
+         *  disable itself
          */
         if (likely(kxtj3->handler_drdy != NULL)) {
             setup_int(dev, true);
         }
-
         return;
     }
+
+    if (cfg->gpio_int.port &&
+        atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
+
+        LOG_INF("%s: AnyMotion callback", __func__);
+
+        if (likely(kxtj3->handler_anymotion != NULL)) {
+            kxtj3->handler_anymotion(dev, kxtj3->trig_anymotion);
+        }
+
+        uint8_t reg;
+        kxtj3->hw_tf->read_reg(dev, KXTJ3_INT_REL, &reg);
+
+        /* 
+         *  Reactivate level triggered interrupt if handler did not
+         *  disable itself
+         */
+        if (likely(kxtj3->handler_anymotion != NULL)) {
+            setup_int(dev, true);
+        }
+        return;
+    }    
 }
 
 #ifdef CONFIG_KXTJ3_TRIGGER_THREAD
 static void kxtj3_work_cb(struct k_work *work)
 {
     struct kxtj3_data *kxtj3 = CONTAINER_OF(work, struct kxtj3_data, work);
-
-    LOG_INF("%s", __func__);
 
     kxtj3_thread_cb(kxtj3->dev);
 }
