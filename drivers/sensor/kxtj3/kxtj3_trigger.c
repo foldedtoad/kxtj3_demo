@@ -39,7 +39,7 @@ static inline void setup_int(const struct device *dev, bool enable)
     const struct kxtj3_config *cfg = dev->config;
 
     if (cfg->gpio_drdy.port) {
-        LOG_INF("%s DRDY interrupt %s: %s",__func__, 
+        LOG_DBG("%s DRDY interrupt %s: %s",__func__, 
             enable ? "enable" : "disable",
             enable ? gpio_int_cfg_tags[cfg->int_mode] : "");
 
@@ -51,7 +51,7 @@ static inline void setup_int(const struct device *dev, bool enable)
 
     if (cfg->gpio_int.port ) {
 
-        LOG_INF("%s INT interrupt %s: %s",__func__, 
+        LOG_DBG("%s INT interrupt %s: %s",__func__, 
             enable ? "enable" : "disable",
             enable ? gpio_int_cfg_tags[cfg->int_mode] : "");
 
@@ -117,16 +117,9 @@ static int kxtj3_start_trigger_int(const struct device *dev)
     return status;
 }
 
-
-
-#define KXTJ3_ANYM_CFG (KXTJ3_INT_CFG_ZHIE_ZUPE | \
-                        KXTJ3_INT_CFG_YHIE_YUPE | \
-                        KXTJ3_INT_CFG_XHIE_XUPE)
-
-
-static int kxtj3_trigger_anym_tap_set(const struct device *dev,
-                                      sensor_trigger_handler_t handler,
-                                      const struct sensor_trigger *trig)
+static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
+                                           sensor_trigger_handler_t handler,
+                                           const struct sensor_trigger *trig)
 {
     const struct kxtj3_config *cfg = dev->config;
     struct kxtj3_data *kxtj3 = dev->data;
@@ -134,7 +127,7 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
     uint8_t reg[1];
 
     if (cfg->gpio_int.port == NULL) {
-        LOG_ERR("trigger_set AnyMotion int not supported");
+        LOG_ERR("%s: AnyMotion interrupt not supported", __func__);
         return -ENOTSUP;
     }
 
@@ -153,7 +146,9 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
         return status;
     }
 
-    reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA | KXTJ3_INT_CTRL_REG1_IEL;    
+    reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA; 
+    reg[0] += (cfg->hw.anymotion_latch) ? KXTJ3_INT_CTRL_REG1_IEL : 0;
+
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
         return status;
@@ -196,11 +191,11 @@ static int kxtj3_trigger_anym_tap_set(const struct device *dev,
     return 0;
 }
 
-static int kxtj3_trigger_anym_set(const struct device *dev,
+static int kxtj3_trigger_anymotion_set(const struct device *dev,
                    sensor_trigger_handler_t handler,
                    const struct sensor_trigger *trig)
 {
-    return kxtj3_trigger_anym_tap_set(dev, handler, trig);
+    return kxtj3_trigger_anymotion_tap_set(dev, handler, trig);
 }
 
 int kxtj3_trigger_set(const struct device *dev,
@@ -212,7 +207,7 @@ int kxtj3_trigger_set(const struct device *dev,
         return kxtj3_trigger_drdy_set(dev, trig->chan, handler, trig);
     } 
     else if (trig->type == SENSOR_TRIG_DELTA) {
-        return kxtj3_trigger_anym_set(dev, handler, trig);
+        return kxtj3_trigger_anymotion_set(dev, handler, trig);
     } 
 
     return -ENOTSUP;
@@ -240,8 +235,6 @@ static void kxtj3_gpio_int_callback(const struct device *dev,
 
     ARG_UNUSED(pins);
 
-    LOG_INF("%s", __func__);
-
     atomic_set_bit(&kxtj3->trig_flags, TRIGGED_INT);
 
     /* int is level triggered so disable until processed */
@@ -258,8 +251,6 @@ static void kxtj3_thread_cb(const struct device *dev)
     const struct kxtj3_config *cfg = dev->config;
     int status;
 
-    LOG_INF("%s", __func__);
-
     if (cfg->gpio_drdy.port &&
         unlikely(atomic_test_and_clear_bit(&kxtj3->trig_flags, START_TRIG_INT))) {
         
@@ -274,7 +265,7 @@ static void kxtj3_thread_cb(const struct device *dev)
     if (cfg->gpio_drdy.port &&
         atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
 
-        LOG_INF("%s: DRDY callback", __func__);
+        LOG_DBG("%s: DRDY callback", __func__);
 
         if (likely(kxtj3->handler_drdy != NULL)) {
             kxtj3->handler_drdy(dev, kxtj3->trig_drdy);
@@ -293,7 +284,7 @@ static void kxtj3_thread_cb(const struct device *dev)
     if (cfg->gpio_int.port &&
         atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
 
-        LOG_INF("%s: AnyMotion callback", __func__);
+        LOG_DBG("%s: AnyMotion callback", __func__);
 
         if (likely(kxtj3->handler_anymotion != NULL)) {
             kxtj3->handler_anymotion(dev, kxtj3->trig_anymotion);

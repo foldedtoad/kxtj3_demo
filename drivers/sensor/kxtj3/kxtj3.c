@@ -319,14 +319,14 @@ static int kxtj3_pm_action(const struct device *dev,
                 CONFIG_SENSOR_INIT_PRIORITY,           \
                 &kxtj3_driver_api);
 
-#define ANYM_ON_INT(inst) \
-    DT_INST_PROP(inst, anym_on_int)
+#define ANYMOTION_ON_INT(inst) \
+    DT_INST_PROP(inst, anymotion_on_int)
 
-#define ANYM_LATCH(inst) \
-    !DT_INST_PROP(inst, anym_no_latch)
+#define ANYMOTION_LATCH(inst) \
+    !DT_INST_PROP(inst, anymotion_latch)
 
-#define ANYM_MODE(inst) \
-    DT_INST_PROP(inst, anym_mode)
+#define ANYMOTION_MODE(inst) \
+    DT_INST_PROP(inst, anymotion_mode)
 
 #ifdef CONFIG_KXTJ3_TRIGGER
 #define GPIO_DT_SPEC_INST_GET_BY_IDX_COND(id, prop, idx)    \
@@ -336,11 +336,11 @@ static int kxtj3_pm_action(const struct device *dev,
 
 #define KXTJ3_CFG_INT(inst)                                         \
     .gpio_drdy =                                                    \
-        COND_CODE_1(ANYM_ON_INT(inst),                              \
+        COND_CODE_1(ANYMOTION_ON_INT(inst),                         \
         ({.port = NULL, .pin = 0, .dt_flags = 0}),                  \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0))),   \
     .gpio_int =                                                     \
-        COND_CODE_1(ANYM_ON_INT(inst),                              \
+        COND_CODE_1(ANYMOTION_ON_INT(inst),                         \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 0)),    \
         (GPIO_DT_SPEC_INST_GET_BY_IDX_COND(inst, irq_gpios, 1))),   \
     .int_mode = DT_INST_PROP(inst, int_gpio_config)
@@ -359,9 +359,9 @@ static int kxtj3_pm_action(const struct device *dev,
             .i2c = I2C_DT_SPEC_INST_GET(inst),              \
         },                                                  \
         .hw = {                                             \
-            .anym_on_int = ANYM_ON_INT(inst),               \
-            .anym_latch = ANYM_LATCH(inst),                 \
-            .anym_mode = ANYM_MODE(inst),                   \
+            .anymotion_on_int = ANYMOTION_ON_INT(inst),     \
+            .anymotion_latch = ANYMOTION_LATCH(inst),       \
+            .anymotion_mode = ANYMOTION_MODE(inst),         \
         },                                                  \
         KXTJ3_CFG_INT(inst)                                 \
     }

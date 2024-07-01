@@ -42,28 +42,28 @@ properties:
 
     enum: [0, 1, 2, 3, 4]
 
-  anym-on-int:
+  anymotion-on-int:
     type: boolean
     description: |
       Indicates that the device driver should use interrupts
       for any movement.
 
-  anym-no-latch:
+  anymotion-latch:
     type: boolean
     description: |
-      Disable the latching of interrupts for any movement.
+      Enable the latching of interrupts for any-movement.
 
-  anym-mode:
+  anymotion-mode:
     type: int
     default: 0
     description: |
-      Select the interrupt mode for any movement.
+      Select the interrupt mode for any-movement.
 
       The default of 0 is the power-on-reset value.
 
-      - 0 # KXTJ3_DT_ANYM_OR_COMBINATION
-      - 1 # KXTJ3_DT_ANYM_6D_MOVEMENT
-      - 2 # KXTJ3_DT_ANYM_AND_COMBINATION
-      - 3 # KXTJ3_DT_ANYM_6D_POSITION
+      - 0 # KXTJ3_DT_ANYMOTION_OR_COMBINATION
+      - 1 # KXTJ3_DT_ANYMOTION_6D_MOVEMENT
+      - 2 # KXTJ3_DT_ANYMOTION_AND_COMBINATION
+      - 3 # KXTJ3_DT_ANYMOTION_6D_POSITION
 
     enum: [0, 1, 2, 3]

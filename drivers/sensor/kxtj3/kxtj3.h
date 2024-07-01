@@ -113,10 +113,10 @@ struct kxtj3_config {
     const uint8_t int_mode;
 #endif /* CONFIG_KXTJ3_TRIGGER */
     struct {
-        bool disc_pull_up : 1;
-        bool anym_on_int  : 1;
-        bool anym_latch   : 1;
-        uint8_t anym_mode : 2;
+        bool disc_pull_up      : 1;
+        bool anymotion_on_int  : 1;
+        bool anymotion_latch   : 1;
+        uint8_t anymotion_mode : 2;
     } hw;
 };
 
@@ -162,11 +162,6 @@ struct kxtj3_data {
 
 #endif /* CONFIG_KXTJ3_TRIGGER */
 };
-
-#if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
-int kxtj3_spi_access(struct kxtj3_data *ctx, uint8_t cmd,
-              void *data, size_t length);
-#endif
 
 #ifdef CONFIG_KXTJ3_TRIGGER
 int kxtj3_trigger_set(const struct device *dev,

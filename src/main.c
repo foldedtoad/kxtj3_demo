@@ -99,7 +99,7 @@ int main(void)
 #else
         /* Any-Motion output */
         trig.type = SENSOR_TRIG_DELTA;
-        trig.chan = SENSOR_CHAN_ACCEL_XYZ;
+        trig.chan = 0;
 
         rc = sensor_trigger_set(sensor, &trig, trigger_anymotion_callback);
         if (rc != 0) {
