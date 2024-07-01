@@ -88,7 +88,7 @@ static int kxtj3_fetch_xyz(const struct device *dev,
         return status;
     }
 
-    LOG_INF("raw: x[%02x-%02x], y[%02x-%02x], z[%02x-%02x]", 
+    LOG_DBG("raw: x[%02x-%02x], y[%02x-%02x], z[%02x-%02x]", 
         kxtj3->sample.raw[0], kxtj3->sample.raw[1],
         kxtj3->sample.raw[2], kxtj3->sample.raw[3],
         kxtj3->sample.raw[4], kxtj3->sample.raw[5]);
@@ -102,14 +102,14 @@ static int kxtj3_fetch_xyz(const struct device *dev,
         *sample &= KXTJ3_MASK;
     }
 
-#if 1
+#if 0
 
-    LOG_INF("samplex: %04x, %04x, %04x", 
+    LOG_DBG("samplex: %04x, %04x, %04x", 
            kxtj3->sample.xyz[0],
            kxtj3->sample.xyz[1],
            kxtj3->sample.xyz[2]);
 
-    LOG_INF("sample: %d, %d, %d", 
+    LOG_DBG("sample: %d, %d, %d", 
            kxtj3->sample.xyz[0],
            kxtj3->sample.xyz[1],
            kxtj3->sample.xyz[2]);

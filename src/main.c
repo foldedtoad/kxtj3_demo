@@ -9,8 +9,11 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 
+#include "kxtj3_dt_symbols.h"
+
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main);
+
 
 void fetch_and_display(const struct device *sensor)
 {
@@ -37,7 +40,7 @@ void fetch_and_display(const struct device *sensor)
 
         //LOG_HEXDUMP_INF(&accel, sizeof(accel), "sample");
 
-#if 0
+#if 1
         LOG_INF("#%u @ %u ms: %sx %f , y %f , z %f",
                count, k_uptime_get_32(), overrun,
                sensor_value_to_double(&accel[0]),
@@ -49,22 +52,23 @@ void fetch_and_display(const struct device *sensor)
 
 #ifdef CONFIG_KXTJ3_TRIGGER
 
-#if 0
-static void trigger_data_callback(const struct device *dev,
-                const struct sensor_trigger *trig)
-{
-    LOG_INF("%s", __func__);
-
-    fetch_and_display(dev);
-}
-#else
+#if USE_ANYMOTION
 
 static void trigger_anymotion_callback(const struct device *dev,
                 const struct sensor_trigger *trig)
 {
     LOG_INF("%s", __func__);
 }
-#endif
+
+#else
+static void trigger_data_callback(const struct device *dev,
+                const struct sensor_trigger *trig)
+{
+    LOG_DBG("%s", __func__);
+
+    fetch_and_display(dev);
+}
+#endif // USE_ANYMOTION
 
 #endif // CONFIG_KXTJ3_TRIGGER
 
@@ -85,18 +89,7 @@ int main(void)
     {
         struct sensor_trigger trig;
         int rc;
-
-#if 0
-        /* normal x,y,z output */
-        trig.type = SENSOR_TRIG_DATA_READY;
-        trig.chan = SENSOR_CHAN_ACCEL_XYZ;
-
-        rc = sensor_trigger_set(sensor, &trig, trigger_data_callback);
-        if (rc != 0) {
-            LOG_ERR("Failed to set trigger: %d", rc);
-            return 0;
-        }
-#else
+#if USE_ANYMOTION
         /* Any-Motion output */
         trig.type = SENSOR_TRIG_DELTA;
         trig.chan = 0;
@@ -106,7 +99,18 @@ int main(void)
             LOG_ERR("Failed to set trigger: %d", rc);
             return 0;
         }
-#endif
+  #else
+        /* normal x,y,z output */
+        trig.type = SENSOR_TRIG_DATA_READY;
+        trig.chan = SENSOR_CHAN_ACCEL_XYZ;
+
+        rc = sensor_trigger_set(sensor, &trig, trigger_data_callback);
+        if (rc != 0) {
+            LOG_ERR("Failed to set trigger: %d", rc);
+            return 0;
+        }
+#endif // USE_ANYMOTION
+
         LOG_INF("Waiting for triggers");
         while (true) {
             k_sleep(K_MSEC(2000));

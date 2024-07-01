@@ -12,7 +12,7 @@ project(kxtj3_demo)
 
 add_subdirectory(drivers)
 
-include_directories(app PRIVATE src)
+include_directories(app PRIVATE src boards)
 
 FILE(GLOB app_sources src/*.c)
 
