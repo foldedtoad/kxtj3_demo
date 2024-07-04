@@ -22,18 +22,18 @@
 #define KXTJ3_DT_ANYMOTION_6D_POSITION      3
 
 /* Output Data Rate (ODR) in Hz */
-#define KXTJ3_DT_ODR_0p3905_HZ     0
-#define KXTJ3_DT_ODR_1p781_HZ      1
-#define KXTJ3_DT_ODR_1p563_HZ      2
-#define KXTJ3_DT_ODR_3p125_HZ      3
-#define KXTJ3_DT_ODR_6p25_HZ       4
-#define KXTJ3_DT_ODR_12p5_HZ       5
-#define KXTJ3_DT_ODR_25_HZ         6
-#define KXTJ3_DT_ODR_50_HZ         7
-#define KXTJ3_DT_ODR_100_HZ        8
-#define KXTJ3_DT_ODR_200_HZ        9
-#define KXTJ3_DT_ODR_400_HZ        10
-#define KXTJ3_DT_ODR_800_HZ        11
+#define KXTJ3_DT_ODR_0p781_HZ   0
+#define KXTJ3_DT_ODR_1p563_HZ   1
+#define KXTJ3_DT_ODR_3p125_HZ   2
+#define KXTJ3_DT_ODR_6p25_HZ    3
+#define KXTJ3_DT_ODR_12p5_HZ    4
+#define KXTJ3_DT_ODR_25_HZ      5
+#define KXTJ3_DT_ODR_50_HZ      6
+#define KXTJ3_DT_ODR_100_HZ     7
+#define KXTJ3_DT_ODR_200_HZ     8
+#define KXTJ3_DT_ODR_400_HZ     9
+#define KXTJ3_DT_ODR_800_HZ     10
+#define KXTJ3_DT_ODR_1600_HZ    11
 
 /* Output Range in G units */
 #define KXTJ3_DT_ACCEL_RANGE_2G     0

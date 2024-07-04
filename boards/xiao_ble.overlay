@@ -42,7 +42,7 @@ arduino_i2c: &i2c0 {
         #size-cells = <0>;
         irq-gpios = <&gpio0 29 0>;
         int-gpio-config = <KXTJ3_DT_GPIO_INT_LEVEL_HIGH>;
-        output-data-rate = <KXTJ3_DT_ODR_6p25_HZ>;
+        output-data-rate = <KXTJ3_DT_ODR_12p5_HZ>;
         accel-range = <KXTJ3_DT_ACCEL_RANGE_2G>;
         perf-mode = <KXTJ3_DT_OPER_MODE_HIGH_RES>;
 #if USE_ANYMOTION

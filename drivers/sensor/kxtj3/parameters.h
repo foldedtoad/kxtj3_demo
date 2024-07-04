@@ -13,6 +13,7 @@
 
 #include "kxtj3.h"
 
+#if 0  // temp
 /*
  *  Convert Kconfig defines to kxtj3 ODR bits
  */
@@ -43,6 +44,8 @@
 #else
                                     #define KXTJ3_ODR_BITS        0xFF
 #endif
+
+#endif // temp
 
 /*
  *  Convert Kconfig defines to kxtj3 RANGE bits

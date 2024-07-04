@@ -16,7 +16,27 @@ LOG_MODULE_REGISTER(kxtj3);
 
 #include "kxtj3.h"
 #include "parameters.h"
+#include "kxtj3_dt_symbols.h"
 
+/* 
+ *  Note: The Device Tree Compiler (DTC) enforces enums define in 
+ *        "kioni,kxtj3-common.yaml" file, so direct indexing should 
+ *        be safe.  FLW.
+ */ 
+static uint8_t ods_table [] = {
+    /* KXTJ3_DT_ODR_0p781_HZ 0  */  0x08,
+    /* KXTJ3_DT_ODR_1p563_HZ 1  */  0x09,
+    /* KXTJ3_DT_ODR_3p125_HZ 2  */  0x0A,
+    /* KXTJ3_DT_ODR_6p25_HZ  3  */  0x0B,
+    /* KXTJ3_DT_ODR_12p5_HZ  4  */  0x00,
+    /* KXTJ3_DT_ODR_25_HZ    5  */  0x01,
+    /* KXTJ3_DT_ODR_50_HZ    6  */  0x02,
+    /* KXTJ3_DT_ODR_100_HZ   7  */  0x03,
+    /* KXTJ3_DT_ODR_200_HZ   8  */  0x04,
+    /* KXTJ3_DT_ODR_400_HZ   9  */  0x05,
+    /* KXTJ3_DT_ODR_800_HZ   10 */  0x06,
+    /* KXTJ3_DT_ODR_1600_HZ  11 */  0x07,
+};
 
 static void kxtj3_convert(int16_t raw_val, uint32_t scale,
                           struct sensor_value *val)
@@ -225,7 +245,10 @@ int kxtj3_init(const struct device *dev)
         return status;
     }
 
-    raw[0] = KXTJ3_ODR_BITS;
+    LOG_DBG("%s: DT output_data_rate: 0x%02x", __func__, cfg->hw.output_data_rate);
+    LOG_DBG("%s: odr_bits: 0x%02x", __func__, ods_table[cfg->hw.output_data_rate]);
+
+    raw[0] = ods_table[cfg->hw.output_data_rate];
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, raw, 1);
 
     if (status < 0) {
@@ -319,6 +342,9 @@ static int kxtj3_pm_action(const struct device *dev,
                 CONFIG_SENSOR_INIT_PRIORITY,           \
                 &kxtj3_driver_api);
 
+#define GET_DT_ODR(inst) \
+    DT_INST_PROP(inst, output_data_rate)
+
 #define ANYMOTION_ON_INT(inst) \
     DT_INST_PROP(inst, anymotion_on_int)
 
@@ -362,6 +388,7 @@ static int kxtj3_pm_action(const struct device *dev,
             .anymotion_on_int = ANYMOTION_ON_INT(inst),     \
             .anymotion_latch = ANYMOTION_LATCH(inst),       \
             .anymotion_mode = ANYMOTION_MODE(inst),         \
+            .output_data_rate = GET_DT_ODR(inst),           \
         },                                                  \
         KXTJ3_CFG_INT(inst)                                 \
     }

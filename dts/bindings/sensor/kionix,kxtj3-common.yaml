@@ -77,18 +77,18 @@ properties:
       The default of 4 (6.25 HZ) is a reaonable values.
       Change as needed.
 
-      - 0  # KXTJ3_DT_ODR_0p3905_HZ
-      - 1  # KXTJ3_DT_ODR_1p781_HZ
-      - 2  # KXTJ3_DT_ODR_1p563_HZ
-      - 3  # KXTJ3_DT_ODR_3p125_HZ
-      - 4  # KXTJ3_DT_ODR_6p25_HZ
-      - 5  # KXTJ3_DT_ODR_12p5_HZ
-      - 6  # KXTJ3_DT_ODR_25_HZ
-      - 7  # KXTJ3_DT_ODR_50_HZ
-      - 8  # KXTJ3_DT_ODR_100_HZ
-      - 9  # KXTJ3_DT_ODR_200_HZ
-      - 10 # KXTJ3_DT_ODR_400_HZ
-      - 11 # KXTJ3_DT_ODR_800_HZ
+      - 0  # KXTJ3_DT_ODR_0p781_HZ
+      - 1  # KXTJ3_DT_ODR_1p563_HZ
+      - 2  # KXTJ3_DT_ODR_3p125_HZ
+      - 3  # KXTJ3_DT_ODR_6p25_HZ
+      - 4  # KXTJ3_DT_ODR_12p5_HZ
+      - 5  # KXTJ3_DT_ODR_25_HZ
+      - 6  # KXTJ3_DT_ODR_50_HZ
+      - 7  # KXTJ3_DT_ODR_100_HZ
+      - 8  # KXTJ3_DT_ODR_200_HZ
+      - 9  # KXTJ3_DT_ODR_400_HZ
+      - 10 # KXTJ3_DT_ODR_800_HZ
+      - 11 # KXTJ3_DT_ODR_1600_HZ
 
     enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 

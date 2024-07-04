@@ -117,6 +117,7 @@ struct kxtj3_config {
         bool anymotion_on_int  : 1;
         bool anymotion_latch   : 1;
         uint8_t anymotion_mode : 2;
+        uint8_t output_data_rate;
     } hw;
 };
 
