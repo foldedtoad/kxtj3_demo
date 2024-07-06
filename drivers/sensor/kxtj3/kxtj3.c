@@ -15,7 +15,6 @@
 LOG_MODULE_REGISTER(kxtj3);
 
 #include "kxtj3.h"
-#include "parameters.h"
 #include "kxtj3_dt_symbols.h"
 
 /* 
@@ -23,7 +22,7 @@ LOG_MODULE_REGISTER(kxtj3);
  *        "kioni,kxtj3-common.yaml" file, so direct indexing should 
  *        be safe.  FLW.
  */ 
-static uint8_t ods_table [] = {
+uint8_t odr_table [] = {
     /* KXTJ3_DT_ODR_0p781_HZ 0  */  0x08,
     /* KXTJ3_DT_ODR_1p563_HZ 1  */  0x09,
     /* KXTJ3_DT_ODR_3p125_HZ 2  */  0x0A,
@@ -37,6 +36,52 @@ static uint8_t ods_table [] = {
     /* KXTJ3_DT_ODR_800_HZ   10 */  0x06,
     /* KXTJ3_DT_ODR_1600_HZ  11 */  0x07,
 };
+
+uint8_t mode_table [] = {
+    /* KXTJ3_DT_ACCEL_MODE_2G_8BIT   0 */   0x00,
+    /* KXTJ3_DT_ACCEL_MODE_2G_12BIT  1 */   0x40,
+    /* KXTJ3_DT_ACCEL_MODE_4G_8BIT   2 */   0x10,
+    /* KXTJ3_DT_ACCEL_MODE_4G_12BIT  3 */   0x50,
+    /* KXTJ3_DT_ACCEL_MODE_8G_8BIT   4 */   0x08,
+    /* KXTJ3_DT_ACCEL_MODE_8G_12BIT  5 */   0x48,
+    /* KXTJ3_DT_ACCEL_MODE_16G_8BIT  6 */   0x04,
+    /* KXTJ3_DT_ACCEL_MODE_16G_12BIT 7 */   0x54,
+    /* KXTJ3_DT_ACCEL_MODE_16G_14BIT 8 */   0x5C,
+};
+
+static void set_mask_scale(const struct device * dev)
+{
+    struct kxtj3_data * kxtj3 = dev->data;
+    const struct kxtj3_config * cfg = dev->config;
+
+    switch (cfg->hw.accel_mode) {
+        case KXTJ3_DT_ACCEL_MODE_2G_8BIT:
+        case KXTJ3_DT_ACCEL_MODE_4G_8BIT:
+        case KXTJ3_DT_ACCEL_MODE_8G_8BIT:
+        case KXTJ3_DT_ACCEL_MODE_16G_8BIT:
+            kxtj3->scale = 127;
+            kxtj3->mask = 0b1111111100000000;
+            break;
+
+        case KXTJ3_DT_ACCEL_MODE_2G_12BIT:
+        case KXTJ3_DT_ACCEL_MODE_4G_12BIT:
+        case KXTJ3_DT_ACCEL_MODE_8G_12BIT:
+        case KXTJ3_DT_ACCEL_MODE_16G_12BIT:
+            kxtj3->scale = 2048;
+            kxtj3->mask = 0b1111111111110000;
+            break;
+
+        case KXTJ3_DT_ACCEL_MODE_16G_14BIT:
+            kxtj3->scale = 8192;
+            kxtj3->mask = 0b1111111111111100;
+            break;
+
+        default:
+            LOG_ERR("%s: undefine mode: %u", __func__, cfg->hw.accel_mode);
+            break;
+    }
+
+}
 
 static void kxtj3_convert(int16_t raw_val, uint32_t scale,
                           struct sensor_value *val)
@@ -119,7 +164,7 @@ static int kxtj3_fetch_xyz(const struct device *dev,
 
         *sample = sys_le16_to_cpu(*sample);
 
-        *sample &= KXTJ3_MASK;
+        *sample &= kxtj3->mask;
     }
 
 #if 0
@@ -219,7 +264,7 @@ int kxtj3_init(const struct device *dev)
     const struct kxtj3_config *cfg = dev->config;
     int status;
     uint8_t id;
-    uint8_t raw[1];
+    uint8_t reg[1];
 
     status = cfg->bus_init(dev);
     if (status < 0) {
@@ -236,30 +281,33 @@ int kxtj3_init(const struct device *dev)
         return -EINVAL;
     }
 
-    kxtj3->scale = KXTJ3_SCALE;
+    set_mask_scale(dev);
 
-    raw[0] = 0;    
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, raw, 1);
+    reg[0] = 0;    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
         LOG_ERR("Failed to go to standby mode.");
         return status;
     }
 
-    LOG_DBG("%s: DT output_data_rate: 0x%02x", __func__, cfg->hw.output_data_rate);
-    LOG_DBG("%s: odr_bits: 0x%02x", __func__, ods_table[cfg->hw.output_data_rate]);
+    LOG_INF("%s: DT accel_rate: %u", __func__, cfg->hw.accel_rate);
+    LOG_INF("%s: odr_bits: 0x%02x", __func__, odr_table[cfg->hw.accel_rate]);
 
-    raw[0] = ods_table[cfg->hw.output_data_rate];
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, raw, 1);
+    reg[0] = odr_table[cfg->hw.accel_rate];
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
 
     if (status < 0) {
-        LOG_ERR("Failed to set ODR.");
+        LOG_ERR("Failed to set accel_rate.");
         return status;
     }
 
-    raw[0] = KXTJ3_CTRL_REG1_PC + KXTJ3_RESOL_BITS;
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, raw, 1);
+    LOG_INF("%s: DT accel_mode: %u", __func__, cfg->hw.accel_mode);
+    LOG_INF("%s: mode_bits: 0x%02x", __func__, mode_table[cfg->hw.accel_mode]);
+
+    reg[0] = KXTJ3_CTRL_REG1_PC + mode_table[cfg->hw.accel_mode];
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
-        LOG_ERR("Failed to go to operating mode.");
+        LOG_ERR("Failed to set accel_mode.");
         return status;
     }
 
@@ -343,7 +391,10 @@ static int kxtj3_pm_action(const struct device *dev,
                 &kxtj3_driver_api);
 
 #define GET_DT_ODR(inst) \
-    DT_INST_PROP(inst, output_data_rate)
+    DT_INST_PROP(inst, accel_rate)
+
+#define GET_DT_MODE(inst) \
+    DT_INST_PROP(inst, accel_mode)
 
 #define ANYMOTION_ON_INT(inst) \
     DT_INST_PROP(inst, anymotion_on_int)
@@ -388,7 +439,8 @@ static int kxtj3_pm_action(const struct device *dev,
             .anymotion_on_int = ANYMOTION_ON_INT(inst),     \
             .anymotion_latch = ANYMOTION_LATCH(inst),       \
             .anymotion_mode = ANYMOTION_MODE(inst),         \
-            .output_data_rate = GET_DT_ODR(inst),           \
+            .accel_rate = GET_DT_ODR(inst),                 \
+            .accel_mode = GET_DT_MODE(inst),                \
         },                                                  \
         KXTJ3_CFG_INT(inst)                                 \
     }

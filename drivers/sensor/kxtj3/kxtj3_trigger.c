@@ -13,7 +13,7 @@
 LOG_MODULE_REGISTER(kxtj3_trigger);
 
 #include "kxtj3.h"
-#include "parameters.h"
+#include "kxtj3_dt_symbols.h"
 
 #define START_TRIG_INT         0
 #define TRIGGED_INT            4
@@ -98,6 +98,7 @@ static int kxtj3_start_trigger_int(const struct device *dev)
 {
     int status;
     struct kxtj3_data *kxtj3 = dev->data;
+    const struct kxtj3_config *cfg = dev->config;
     uint8_t reg[1];
 
     LOG_INF("%s", __func__);
@@ -108,7 +109,7 @@ static int kxtj3_start_trigger_int(const struct device *dev)
         return status;
     }
 
-    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_RESOL_BITS | KXTJ3_CTRL_REG1_DRDYE;
+    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_CTRL_REG1_DRDYE | mode_table[cfg->hw.accel_mode];
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
         return status;
@@ -140,7 +141,10 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
         return status;
     }
 
-    reg[0] = KXTJ3_DATA_CTRL_REG_200_HZ;    
+    LOG_INF("%s: DT output_data_rate: %u", __func__, cfg->hw.accel_rate);
+    LOG_INF("%s: odr_bits: 0x%02x", __func__, odr_table[cfg->hw.accel_rate]);
+
+    reg[0] = odr_table[cfg->hw.accel_rate];    
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
     if (status < 0) {
         return status;
@@ -174,7 +178,10 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
         return status;
     }
 
-    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_RESOL_BITS | KXTJ3_CTRL_REG1_WUFE;    
+    LOG_INF("%s: DT accel_mode: %u", __func__, cfg->hw.accel_mode);
+    LOG_INF("%s: mode_bits: 0x%02x", __func__, mode_table[cfg->hw.accel_mode]);
+
+    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_CTRL_REG1_WUFE | mode_table[cfg->hw.accel_mode];    
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
         return status;

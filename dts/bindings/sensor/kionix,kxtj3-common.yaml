@@ -68,7 +68,7 @@ properties:
 
     enum: [0, 1, 2, 3]
 
-  output-data-rate:
+  accel-rate:
     type: int
     default: 4
     description: |
@@ -92,33 +92,23 @@ properties:
 
     enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
-  accel-range:
-    type: int
-    default: 0
-    description: |
-      Select the accelerometer output range, in Gs.
-
-      The default of 0 (2G) is a reaonable values.
-      Change as needed.
-
-      - 0 # KXTJ3_DT_ACCEL_RANGE_2G
-      - 1 # KXTJ3_DT_ACCEL_RANGE_4G
-      - 2 # KXTJ3_DT_ACCEL_RANGE_8G
-      - 3 # KXTJ3_DT_ACCEL_RANGE_16G
-
-    enum: [0, 1, 2, 3]
-
-  perf-mode:
+  accel-mode:
     type: int
     default: 1
     description: |
       Select the performance mode.
 
-      The default of 1 (High Resolution) is a reaonable values.
+      The default of 1 (2G, 12-BIT) is a reaonable values.
       Change as needed.
 
-      - 0 # KXTJ3_DT_OPER_MODE_LOW_POWER
-      - 1 # KXTJ3_DT_OPER_MODE_HIGH_RES
-      - 2 # KXTJ3_DT_OPER_MODE_HIGH_RES_16G
+      - 0 # KXTJ3_DT_ACCEL_MODE_2G_8BIT
+      - 1 # KXTJ3_DT_ACCEL_MODE_2G_12BIT
+      - 2 # KXTJ3_DT_ACCEL_MODE_4G_8BIT
+      - 3 # KXTJ3_DT_ACCEL_MODE_4G_12BIT
+      - 4 # KXTJ3_DT_ACCEL_MODE_8G_8BIT
+      - 5 # KXTJ3_DT_ACCEL_MODE_8G_12BIT
+      - 6 # KXTJ3_DT_ACCEL_MODE_16G_8BIT
+      - 7 # KXTJ3_DT_ACCEL_MODE_16G_12BIT
+      - 8 # KXTJ3_DT_ACCEL_MODE_16G_14BIT
 
-    enum: [0, 1, 2]
+    enum: [0, 1, 2, 3, 4, 5, 6, 7, 8]

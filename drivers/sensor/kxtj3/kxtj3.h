@@ -89,6 +89,9 @@
 #define KXTJ3_WAKEUP_THRD_L          0x6B
 
 
+extern uint8_t odr_table [];
+extern uint8_t mode_table [];
+
 
 /* sample buffer size includes status register */
 #define KXTJ3_BUF_SZ            6
@@ -117,7 +120,8 @@ struct kxtj3_config {
         bool anymotion_on_int  : 1;
         bool anymotion_latch   : 1;
         uint8_t anymotion_mode : 2;
-        uint8_t output_data_rate;
+        uint8_t accel_rate;
+        uint8_t accel_mode;
     } hw;
 };
 
@@ -140,7 +144,8 @@ struct kxtj3_data {
 
     union kxtj3_sample sample;
     /* current scaling factor, in micro m/s^2 / lsb */
-    uint32_t scale;
+    uint16_t scale;
+    uint16_t mask;
 
 #ifdef CONFIG_PM_DEVICE
     uint8_t reg_ctrl1_active_val;

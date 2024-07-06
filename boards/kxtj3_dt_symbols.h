@@ -35,15 +35,15 @@
 #define KXTJ3_DT_ODR_800_HZ     10
 #define KXTJ3_DT_ODR_1600_HZ    11
 
-/* Output Range in G units */
-#define KXTJ3_DT_ACCEL_RANGE_2G     0
-#define KXTJ3_DT_ACCEL_RANGE_4G     1
-#define KXTJ3_DT_ACCEL_RANGE_8G     2
-#define KXTJ3_DT_ACCEL_RANGE_16G    3
-
 /* Perfromance mode */
-#define KXTJ3_DT_OPER_MODE_LOW_POWER     0
-#define KXTJ3_DT_OPER_MODE_HIGH_RES      1
-#define KXTJ3_DT_OPER_MODE_HIGH_RES_16G  2
+#define KXTJ3_DT_ACCEL_MODE_2G_8BIT     0
+#define KXTJ3_DT_ACCEL_MODE_2G_12BIT    1
+#define KXTJ3_DT_ACCEL_MODE_4G_8BIT     2
+#define KXTJ3_DT_ACCEL_MODE_4G_12BIT    3
+#define KXTJ3_DT_ACCEL_MODE_8G_8BIT     4
+#define KXTJ3_DT_ACCEL_MODE_8G_12BIT    5
+#define KXTJ3_DT_ACCEL_MODE_16G_8BIT    6
+#define KXTJ3_DT_ACCEL_MODE_16G_12BIT   7
+#define KXTJ3_DT_ACCEL_MODE_16G_14BIT   8
 
 #endif /* _KXTJ3_DT_SYMBOLS_H_ */
