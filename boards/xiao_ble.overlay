@@ -50,4 +50,15 @@ arduino_i2c: &i2c0 {
         anymotion-mode = <KXTJ3_DT_ANYMOTION_6D_MOVEMENT>;
 #endif
     };
+
+    /* Alternate I2C address device instance used for soft reset: see TN017 */
+    kxtj3_alt: kxtj3_alt@c {
+        status = "okay";
+        compatible = "kionix,kxtj3";
+        reg = <0xc>;
+        #io-channel-cells = <1>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+        alt_reset_dev;
+    };
 };

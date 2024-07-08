@@ -83,6 +83,50 @@ static void set_mask_scale(const struct device * dev)
 
 }
 
+static int soft_reset(const struct device * dev)
+{
+    struct kxtj3_data * kxtj3 = dev->data;
+    int status = 0;
+    uint8_t reg[1];
+
+    reg[0] = KXTJ3_CTRL_REG2_SRST;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
+    if (status < 0)
+    {
+        LOG_INF("%s: normal soft reset failed", __func__);
+
+        const struct device * const dev_alt = DEVICE_DT_GET(DT_NODELABEL(kxtj3_alt));
+        struct kxtj3_data * kxtj3_alt = dev_alt->data;
+        const struct kxtj3_config * cfg_alt = dev_alt->config;
+
+        if (dev_alt == NULL) {
+            LOG_INF("No dev_alt found");
+            return 0;
+        }
+
+        status = cfg_alt->bus_init(dev_alt);
+        if (status < 0) {
+            return status;
+        }
+
+        status = kxtj3_alt->hw_tf->write_data(dev_alt, KXTJ3_CTRL_REG2, reg, sizeof(reg));
+        if (status < 0) {
+            LOG_INF("%s: alternate soft reset failed", __func__);
+            return 0;
+        }
+
+        reg[0] = 0;
+        status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
+    }
+
+    k_sleep(K_MSEC(2));
+
+    LOG_INF("soft reset OK");
+
+    return status;
+}
+
+
 static void kxtj3_convert(int16_t raw_val, uint32_t scale,
                           struct sensor_value *val)
 {
@@ -270,6 +314,14 @@ int kxtj3_init(const struct device *dev)
     if (status < 0) {
         return status;
     }
+
+    /* Quick return if this instance is marked as alt-reset-dev */
+    if (cfg->hw.alt_reset_dev) {
+        return 0;
+    }
+
+    soft_reset(dev);
+
     status = kxtj3->hw_tf->read_reg(dev, KXTJ3_WHO_AM_I, &id);
     if (status < 0) {
         LOG_ERR("Failed to read chip id.");
@@ -396,6 +448,9 @@ static int kxtj3_pm_action(const struct device *dev,
 #define GET_DT_MODE(inst) \
     DT_INST_PROP(inst, accel_mode)
 
+#define GET_DT_ALT_RESET_DEV(inst) \
+    DT_INST_PROP(inst, alt_reset_dev)
+
 #define ANYMOTION_ON_INT(inst) \
     DT_INST_PROP(inst, anymotion_on_int)
 
@@ -436,6 +491,7 @@ static int kxtj3_pm_action(const struct device *dev,
             .i2c = I2C_DT_SPEC_INST_GET(inst),              \
         },                                                  \
         .hw = {                                             \
+            .alt_reset_dev = GET_DT_ALT_RESET_DEV(inst),    \
             .anymotion_on_int = ANYMOTION_ON_INT(inst),     \
             .anymotion_latch = ANYMOTION_LATCH(inst),       \
             .anymotion_mode = ANYMOTION_MODE(inst),         \

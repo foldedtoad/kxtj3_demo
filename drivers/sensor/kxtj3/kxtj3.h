@@ -44,6 +44,8 @@
 #define KXTJ3_CTRL_REG1_WUFE         0x02
 
 #define KXTJ3_CTRL_REG2              0x1D
+#define KXTJ3_CTRL_REG2_SRST         0x80
+#define KXTJ3_CTRL_REG2_DCST         0x10
 #define KXTJ3_CTRL_REG2_0p781_HZ     0x00
 #define KXTJ3_CTRL_REG2_1p563_HZ     0x01
 #define KXTJ3_CTRL_REG2_3p125_HZ     0x02
@@ -116,6 +118,7 @@ struct kxtj3_config {
     const uint8_t int_mode;
 #endif /* CONFIG_KXTJ3_TRIGGER */
     struct {
+        bool alt_reset_dev     : 1;
         bool disc_pull_up      : 1;
         bool anymotion_on_int  : 1;
         bool anymotion_latch   : 1;
