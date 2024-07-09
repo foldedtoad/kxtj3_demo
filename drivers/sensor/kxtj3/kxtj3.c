@@ -89,39 +89,53 @@ static int soft_reset(const struct device * dev)
     int status = 0;
     uint8_t reg[1];
 
+    /* Init data out to soft-reset option */
     reg[0] = KXTJ3_CTRL_REG2_SRST;
+
+    /* Try to reset the accel with the normal I2C device address (0x0E or 0x0F) */
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
     if (status < 0)
     {
         LOG_INF("%s: normal soft reset failed", __func__);
 
+        /* Setup and configure for alternate "Flipped" I2C address: see overlay */
         const struct device * const dev_alt = DEVICE_DT_GET(DT_NODELABEL(kxtj3_alt));
         struct kxtj3_data * kxtj3_alt = dev_alt->data;
         const struct kxtj3_config * cfg_alt = dev_alt->config;
 
         if (dev_alt == NULL) {
-            LOG_INF("No dev_alt found");
+            LOG_ERR("%s: No dev_alt found", __func__);
             return 0;
         }
 
         status = cfg_alt->bus_init(dev_alt);
         if (status < 0) {
+            LOG_ERR("%s: alt_dev bus init failed: %d", __func__, status);
             return status;
         }
 
+        /* Try to soft-reset with "Flipped" I2C address (0x0C or 0x0D) */
         status = kxtj3_alt->hw_tf->write_data(dev_alt, KXTJ3_CTRL_REG2, reg, sizeof(reg));
         if (status < 0) {
-            LOG_INF("%s: alternate soft reset failed", __func__);
+            LOG_ERR("%s: alternate soft reset failed", __func__);
             return 0;
         }
 
-        reg[0] = 0;
+        /* Allow "Flipped" I2C address soft-reset to complete */
+        k_sleep(K_MSEC(2));
+
+        /* Retry normal I2C address soft-reset */
         status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
+        if (status < 0) {
+            LOG_INF("%s: normal soft reset failed (final)", __func__);
+            return status;
+        }
     }
 
+    /* Allow normal I2C address soft-resest to complete */
     k_sleep(K_MSEC(2));
 
-    LOG_INF("soft reset OK");
+    LOG_INF("%s: soft reset OK", __func__);
 
     return status;
 }
