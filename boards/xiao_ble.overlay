@@ -51,7 +51,15 @@ arduino_i2c: &i2c0 {
 #endif
     };
 
-    /* Alternate I2C address device instance used for soft reset: see TN017 */
+    /* 
+     *  Alternate "Flipped" I2C address device instance used for soft reset.
+     *  See Tcchnical Note TN017 for explaination of "Flipped" address.
+     *
+     *  In this overlay the "Normal" address is 0x0E (ADDR pin grounded), 
+     *  and the "Flipped" address is 0x0C. 
+     *  Alternatively, if the Normal address is 0x0F (ADDR pin at Vdd), the
+     *  Flipped address will be 0x0D.
+     */
     kxtj3_alt: kxtj3_alt@c {
         status = "okay";
         compatible = "kionix,kxtj3";

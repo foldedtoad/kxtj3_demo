@@ -83,6 +83,9 @@ static void set_mask_scale(const struct device * dev)
 
 }
 
+/*
+ *  Review Technical Note TN017 to understand this reset routine.
+ */
 static int soft_reset(const struct device * dev)
 {
     struct kxtj3_data * kxtj3 = dev->data;
