@@ -76,6 +76,28 @@ char * mode_tag_table [] = {
     "16G, 14-bit",
 };
 
+uint8_t anymotion_rate_table [] = {
+    /* KXTJ3_DT_ANYMOTION_RATE_0p781_HZ 0  */  0x00,
+    /* KXTJ3_DT_ANYMOTION_RATE_1p563_HZ 1  */  0x01,
+    /* KXTJ3_DT_ANYMOTION_RATE_3p125_HZ 2  */  0x02,
+    /* KXTJ3_DT_ANYMOTION_RATE_6p25_HZ  3  */  0x03,
+    /* KXTJ3_DT_ANYMOTION_RATE_12p5_HZ  4  */  0x04,
+    /* KXTJ3_DT_ANYMOTION_RATE_25_HZ    5  */  0x05,
+    /* KXTJ3_DT_ANYMOTION_RATE_50_HZ    6  */  0x06,
+    /* KXTJ3_DT_ANYMOTION_RATE_100_HZ   7  */  0x07,
+};
+
+char * anymotion_rate_tag_table [] = {
+    "0.781 Hz",
+    "1.563 Hz",
+    "3.125 Hz",
+    "6.25 Hz",
+    "12.5 Hz",
+    "25 Hz",
+    "50 Hz",
+    "100 Hz",
+};
+
 
 static void set_mask_scale(const struct device * dev)
 {
@@ -329,13 +351,9 @@ static int kxtj3_acc_config(const struct device *dev,
                             const struct sensor_value *val)
 {
     switch (attr) {
-#ifdef CONFIG_KXTJ3_ACCEL_HP_FILTERS
-    case SENSOR_ATTR_CONFIGURATION:
-        return kxtj3_acc_hp_filter_set(dev, val->val1);
-#endif
-    default:
-        LOG_DBG("Accel attribute not supported.");
-        return -ENOTSUP;
+        default:
+            LOG_INF("Accel attribute not supported: %u", attr);
+            return -ENOTSUP;
     }
 
     return 0;
@@ -529,6 +547,10 @@ static int kxtj3_pm_action(const struct device *dev,
 #define ANYMOTION_MODE(inst) \
     DT_INST_PROP(inst, anymotion_mode)
 
+#define ANYMOTION_RATE(inst) \
+    DT_INST_PROP(inst, anymotion_rate)
+
+
 #ifdef CONFIG_KXTJ3_TRIGGER
 #define GPIO_DT_SPEC_INST_GET_BY_IDX_COND(id, prop, idx)    \
     COND_CODE_1(DT_INST_PROP_HAS_IDX(id, prop, idx),        \
@@ -563,7 +585,7 @@ static int kxtj3_pm_action(const struct device *dev,
             .alt_reset_dev = GET_DT_ALT_RESET_DEV(inst),    \
             .anymotion_on_int = ANYMOTION_ON_INT(inst),     \
             .anymotion_latch = ANYMOTION_LATCH(inst),       \
-            .anymotion_mode = ANYMOTION_MODE(inst),         \
+            .anymotion_rate = ANYMOTION_RATE(inst),         \
             .accel_rate = GET_DT_ODR(inst),                 \
             .accel_mode = GET_DT_MODE(inst),                \
         },                                                  \

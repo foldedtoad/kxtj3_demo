@@ -142,9 +142,9 @@ static int kxtj3_start_trigger_int(const struct device *dev)
     return status;
 }
 
-static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
-                                           sensor_trigger_handler_t handler,
-                                           const struct sensor_trigger *trig)
+static int kxtj3_trigger_anymotion_set(const struct device *dev,
+                                       sensor_trigger_handler_t handler,
+                                       const struct sensor_trigger *trig)
 {
     const struct kxtj3_config *cfg = dev->config;
     struct kxtj3_data *kxtj3 = dev->data;
@@ -165,6 +165,7 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
         return status;
     }
 
+#if 1
     LOG_INF("%s:  odr options: 0x%02x  -- \"%s\"", __func__, 
             odr_table[cfg->hw.accel_rate],
             odr_tag_table[cfg->hw.accel_rate]);
@@ -174,6 +175,7 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
     if (status < 0) {
         return status;
     }
+#endif
 
     reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA; 
     reg[0] += (cfg->hw.anymotion_latch) ? KXTJ3_INT_CTRL_REG1_IEL : 0;
@@ -191,7 +193,11 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
         return status;
     }
 
-    reg[0] = KXTJ3_CTRL_REG2_6p25_HZ;
+    LOG_INF("%s: anymotion rate options: 0x%02x  -- \"%s\"", __func__,
+            anymotion_rate_table[cfg->hw.anymotion_rate],
+            anymotion_rate_tag_table[cfg->hw.anymotion_rate]);    
+
+    reg[0] = anymotion_rate_table[cfg->hw.anymotion_rate];
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG2, reg, sizeof(reg));
     if (status < 0) {
         return status;
@@ -224,16 +230,9 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
     return 0;
 }
 
-static int kxtj3_trigger_anymotion_set(const struct device *dev,
-                   sensor_trigger_handler_t handler,
-                   const struct sensor_trigger *trig)
-{
-    return kxtj3_trigger_anymotion_tap_set(dev, handler, trig);
-}
-
 int kxtj3_trigger_set(const struct device *dev,
-               const struct sensor_trigger *trig,
-               sensor_trigger_handler_t handler)
+                      const struct sensor_trigger *trig,
+                      sensor_trigger_handler_t handler)
 {
     if (trig->type == SENSOR_TRIG_DATA_READY &&
         trig->chan == SENSOR_CHAN_ACCEL_XYZ) {
@@ -245,21 +244,6 @@ int kxtj3_trigger_set(const struct device *dev,
 
     return -ENOTSUP;
 }
-
-#ifdef CONFIG_KXTJ3_ACCEL_HP_FILTERS
-int kxtj3_acc_hp_filter_set(const struct device *dev, int32_t val)
-{
-    struct kxtj3_data *kxtj3 = dev->data;
-    int status;
-
-    status = kxtj3->hw_tf->update_reg(dev, KXTJ3_REG_CTRL2, KXTJ3_HPIS_EN_MASK, val);
-    if (status < 0) {
-        LOG_ERR("Failed to set high pass filters");
-    }
-
-    return status;
-}
-#endif // CONFIG_KXTJ3_ACCEL_HP_FILTERS
 
 static void kxtj3_gpio_int_callback(const struct device *dev,
                                     struct gpio_callback *cb, uint32_t pins)

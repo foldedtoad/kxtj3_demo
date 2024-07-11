@@ -53,20 +53,25 @@ properties:
     description: |
       Enable the latching of interrupts for any-movement.
 
-  anymotion-mode:
+  anymotion-rate:
     type: int
     default: 0
     description: |
-      Select the interrupt mode for any-movement.
+      Select the Output Wake-Up Function Rates.
 
-      The default of 0 is the power-on-reset value.
+      The default of 0 (0.781 HZ) is a reaonable values.
+      Change as needed.
 
-      - 0 # KXTJ3_DT_ANYMOTION_OR_COMBINATION
-      - 1 # KXTJ3_DT_ANYMOTION_6D_MOVEMENT
-      - 2 # KXTJ3_DT_ANYMOTION_AND_COMBINATION
-      - 3 # KXTJ3_DT_ANYMOTION_6D_POSITION
+      - 0  # KXTJ3_DT_OWUF_0p781_HZ
+      - 1  # KXTJ3_DT_OWUF_1p563_HZ
+      - 2  # KXTJ3_DT_OWUF_3p125_HZ
+      - 3  # KXTJ3_DT_OWUF_6p25_HZ
+      - 4  # KXTJ3_DT_OWUF_12p5_HZ
+      - 5  # KXTJ3_DT_OWUF_25_HZ
+      - 6  # KXTJ3_DT_OWUF_50_HZ
+      - 7  # KXTJ3_DT_OWUF_100_HZ
 
-    enum: [0, 1, 2, 3]
+    enum: [0, 1, 2, 3, 4, 5, 6, 7]
 
   accel-rate:
     type: int

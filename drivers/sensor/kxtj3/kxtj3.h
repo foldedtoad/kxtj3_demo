@@ -95,6 +95,8 @@ extern uint8_t odr_table [];
 extern char *  odr_tag_table [];
 extern uint8_t mode_table [];
 extern char *  mode_tag_table [];
+extern uint8_t anymotion_rate_table [];
+extern char *  anymotion_rate_tag_table [];
 
 void regs_dump(const struct device * dev);
 
@@ -125,7 +127,7 @@ struct kxtj3_config {
         bool disc_pull_up      : 1;
         bool anymotion_on_int  : 1;
         bool anymotion_latch   : 1;
-        uint8_t anymotion_mode : 2;
+        uint8_t anymotion_rate;
         uint8_t accel_rate;
         uint8_t accel_mode;
     } hw;

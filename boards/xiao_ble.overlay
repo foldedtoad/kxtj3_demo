@@ -47,7 +47,7 @@ arduino_i2c: &i2c0 {
 #if USE_ANYMOTION
         anymotion-on-int;
         anymotion-latch;
-        anymotion-mode = <KXTJ3_DT_ANYMOTION_6D_MOVEMENT>;
+        anymotion-rate = <KXTJ3_DT_ANYMOTION_RATE_6p25_HZ>;
 #endif
     };
 

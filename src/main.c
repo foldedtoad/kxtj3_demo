@@ -37,9 +37,6 @@ void fetch_and_display(const struct device *sensor)
         LOG_ERR("ERROR: Update failed: %d", rc);
     }
     else {
-
-        //LOG_HEXDUMP_INF(&accel, sizeof(accel), "sample");
-
 #if 1
         LOG_INF("#%u @ %u ms: %sx %f , y %f , z %f",
                count, k_uptime_get_32(), overrun,
