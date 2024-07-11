@@ -165,20 +165,8 @@ static int kxtj3_trigger_anymotion_set(const struct device *dev,
         return status;
     }
 
-#if 1
-    LOG_INF("%s:  odr options: 0x%02x  -- \"%s\"", __func__, 
-            odr_table[cfg->hw.accel_rate],
-            odr_tag_table[cfg->hw.accel_rate]);
-
-    reg[0] = odr_table[cfg->hw.accel_rate];    
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-#endif
-
     reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA; 
-    reg[0] += (cfg->hw.anymotion_latch) ? KXTJ3_INT_CTRL_REG1_IEL : 0;
+    reg[0] |= (cfg->hw.anymotion_latch) ? KXTJ3_INT_CTRL_REG1_IEL : 0;
 
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
