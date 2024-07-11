@@ -92,8 +92,11 @@
 
 
 extern uint8_t odr_table [];
+extern char *  odr_tag_table [];
 extern uint8_t mode_table [];
+extern char *  mode_tag_table [];
 
+void regs_dump(const struct device * dev);
 
 /* sample buffer size includes status register */
 #define KXTJ3_BUF_SZ            6

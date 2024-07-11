@@ -37,6 +37,21 @@ uint8_t odr_table [] = {
     /* KXTJ3_DT_ODR_1600_HZ  11 */  0x07,
 };
 
+char * odr_tag_table [] = {
+    "0.781 Hz",
+    "1.563 Hz",
+    "3.125 Hz",
+    "6.25 Hz",
+    "12.5 Hz",
+    "25 Hz",
+    "50 Hz",
+    "100 Hz",
+    "200 Hz",
+    "400 Hz",
+    "800 Hz",
+    "1600 Hz",
+};
+
 uint8_t mode_table [] = {
     /* KXTJ3_DT_ACCEL_MODE_2G_8BIT   0 */   0x00,
     /* KXTJ3_DT_ACCEL_MODE_2G_12BIT  1 */   0x40,
@@ -48,6 +63,19 @@ uint8_t mode_table [] = {
     /* KXTJ3_DT_ACCEL_MODE_16G_12BIT 7 */   0x54,
     /* KXTJ3_DT_ACCEL_MODE_16G_14BIT 8 */   0x5C,
 };
+
+char * mode_tag_table [] = {
+    "2G, 8-bit",
+    "2G, 12-bit",
+    "4G, 8-bit",
+    "4G, 12-bit",
+    "8G, 8-bit",
+    "8G, 12-bit",
+    "16G, 8-bit",
+    "16G, 12-bit",
+    "16G, 14-bit",
+};
+
 
 static void set_mask_scale(const struct device * dev)
 {
@@ -141,6 +169,28 @@ static int soft_reset(const struct device * dev)
     LOG_INF("%s: soft reset OK", __func__);
 
     return status;
+}
+
+void regs_dump(const struct device * dev)
+{
+    int status;
+    struct kxtj3_data *kxtj3 = dev->data;
+    uint8_t regs[7];
+
+    memset(regs, 0, sizeof(regs));
+
+    /* Read all selected regs in on transaction */
+    status = kxtj3->hw_tf->read_data(dev, KXTJ3_CTRL_REG1, regs, sizeof(regs));
+    if (status < 0) {
+        LOG_INF("couldn't get regs dump");
+        return;
+    }
+
+    LOG_INF("CTRL_REG1: %02X", regs[0]); 
+    LOG_INF("CTRL_REG2: %02X", regs[2]);
+    LOG_INF("INT_CTRL_REG1: %02X", regs[3]); 
+    LOG_INF("INT_CTRL_REG2: %02X", regs[4]); 
+    LOG_INF("DATA_CTRL_REG %02X", regs[6]);
 }
 
 
@@ -359,8 +409,9 @@ int kxtj3_init(const struct device *dev)
         return status;
     }
 
-    LOG_INF("%s: DT accel_rate: %u", __func__, cfg->hw.accel_rate);
-    LOG_INF("%s: odr_bits: 0x%02x", __func__, odr_table[cfg->hw.accel_rate]);
+    LOG_INF("%s:  odr options: 0x%02x  -- \"%s\"", __func__,
+            odr_table[cfg->hw.accel_rate],
+            odr_tag_table[cfg->hw.accel_rate]);
 
     reg[0] = odr_table[cfg->hw.accel_rate];
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
@@ -370,10 +421,11 @@ int kxtj3_init(const struct device *dev)
         return status;
     }
 
-    LOG_INF("%s: DT accel_mode: %u", __func__, cfg->hw.accel_mode);
-    LOG_INF("%s: mode_bits: 0x%02x", __func__, mode_table[cfg->hw.accel_mode]);
+    LOG_INF("%s: mode options: 0x%02X  -- \"%s\"", __func__, 
+            mode_table[cfg->hw.accel_mode], 
+            mode_tag_table[cfg->hw.accel_mode]);
 
-    reg[0] = KXTJ3_CTRL_REG1_PC + mode_table[cfg->hw.accel_mode];
+    reg[0] = KXTJ3_CTRL_REG1_PC | mode_table[cfg->hw.accel_mode];
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
     if (status < 0) {
         LOG_ERR("Failed to set accel_mode.");

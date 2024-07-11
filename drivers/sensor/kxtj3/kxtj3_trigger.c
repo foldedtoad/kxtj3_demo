@@ -115,6 +115,30 @@ static int kxtj3_start_trigger_int(const struct device *dev)
         return status;
     }
 
+    reg[0] = KXTJ3_INT_CTRL_REG1_IEN | KXTJ3_INT_CTRL_REG1_IEA | KXTJ3_INT_CTRL_REG1_IEL; 
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+#if 0 
+    reg[0] = 0;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_INT_REL, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+#endif
+
+    reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_CTRL_REG1_DRDYE | mode_table[cfg->hw.accel_mode];    
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+#if 0 // diagnostic
+    regs_dump(dev);
+#endif
+
     return status;
 }
 
@@ -141,8 +165,9 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
         return status;
     }
 
-    LOG_INF("%s: DT output_data_rate: %u", __func__, cfg->hw.accel_rate);
-    LOG_INF("%s: odr_bits: 0x%02x", __func__, odr_table[cfg->hw.accel_rate]);
+    LOG_INF("%s:  odr options: 0x%02x  -- \"%s\"", __func__, 
+            odr_table[cfg->hw.accel_rate],
+            odr_tag_table[cfg->hw.accel_rate]);
 
     reg[0] = odr_table[cfg->hw.accel_rate];    
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_DATA_CTRL_REG, reg, sizeof(reg));
@@ -178,8 +203,9 @@ static int kxtj3_trigger_anymotion_tap_set(const struct device *dev,
         return status;
     }
 
-    LOG_INF("%s: DT accel_mode: %u", __func__, cfg->hw.accel_mode);
-    LOG_INF("%s: mode_bits: 0x%02x", __func__, mode_table[cfg->hw.accel_mode]);
+    LOG_INF("%s: mode options: 0x%02X  -- \"%s\"", __func__, 
+            mode_table[cfg->hw.accel_mode], 
+            mode_tag_table[cfg->hw.accel_mode]);
 
     reg[0] = KXTJ3_CTRL_REG1_PC | KXTJ3_CTRL_REG1_WUFE | mode_table[cfg->hw.accel_mode];    
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_CTRL_REG1, reg, sizeof(reg));
