@@ -202,11 +202,9 @@ static int kxtj3_trigger_anymotion_set(const struct device *dev,
     LOG_INF("%s: anymotion threshold value: %u", 
             __func__, cfg->hw.anymotion_threshold);
 
-    uint16_t threshold = cfg->hw.anymotion_threshold;
-
     uint8_t reg2[2];
-    reg2[0] = (uint8_t)(threshold >> 8);
-    reg2[1] = (uint8_t)(threshold << 4);
+    reg2[0] = (uint8_t)(cfg->hw.anymotion_threshold >> 8);
+    reg2[1] = (uint8_t)(cfg->hw.anymotion_threshold << 4);
 
     status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_THRD_H, reg2, sizeof(reg2));
     if (status < 0) {
