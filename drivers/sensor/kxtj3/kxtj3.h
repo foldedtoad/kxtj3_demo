@@ -123,13 +123,19 @@ struct kxtj3_config {
     const uint8_t int_mode;
 #endif /* CONFIG_KXTJ3_TRIGGER */
     struct {
-        bool alt_reset_dev     : 1;
-        bool disc_pull_up      : 1;
-        bool anymotion_on_int  : 1;
-        bool anymotion_latch   : 1;
-        uint8_t anymotion_rate;
+        /* General configuration */
+        uint8_t alt_reset_dev;
+
+        /* Accelerometer configuration */
         uint8_t accel_rate;
         uint8_t accel_mode;
+
+        /* AnyMotion configuration */
+        uint8_t  anymotion_on_int;
+        uint8_t  anymotion_latch;
+        uint8_t  anymotion_rate;  
+        uint8_t  anymotion_counter;
+        uint16_t anymotion_threshold;
     } hw;
 };
 

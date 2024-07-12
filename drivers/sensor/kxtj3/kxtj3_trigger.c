@@ -181,7 +181,39 @@ static int kxtj3_trigger_anymotion_set(const struct device *dev,
         return status;
     }
 
-    LOG_INF("%s: anymotion rate options: 0x%02x  -- \"%s\"", __func__,
+    if (cfg->hw.anymotion_counter >= 255) {
+        LOG_ERR("%s: counter value out of valid range: %u", 
+                 __func__, cfg->hw.anymotion_counter);
+        return ENOTSUP;
+    }
+    LOG_INF("%s: anymotion counter value: %u", __func__, cfg->hw.anymotion_counter);
+
+    reg[0] = cfg->hw.anymotion_counter;
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_COUNTER, reg, sizeof(reg));
+    if (status < 0) {
+        return status;
+    }
+
+    if (cfg->hw.anymotion_threshold >= 16384) {
+        LOG_ERR("%s: threshold value out of valid range: %u", 
+                 __func__, cfg->hw.anymotion_threshold);
+        return ENOTSUP;
+    }
+    LOG_INF("%s: anymotion threshold value: %u", 
+            __func__, cfg->hw.anymotion_threshold);
+
+    uint16_t threshold = cfg->hw.anymotion_threshold;
+
+    uint8_t reg2[2];
+    reg2[0] = (uint8_t)(threshold >> 8);
+    reg2[1] = (uint8_t)(threshold << 4);
+
+    status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_THRD_H, reg2, sizeof(reg2));
+    if (status < 0) {
+        return status;
+    }
+
+    LOG_INF("%s: anymotion rate: 0x%02x  -- \"%s\"", __func__,
             anymotion_rate_table[cfg->hw.anymotion_rate],
             anymotion_rate_tag_table[cfg->hw.anymotion_rate]);    
 
@@ -191,13 +223,7 @@ static int kxtj3_trigger_anymotion_set(const struct device *dev,
         return status;
     }
 
-    reg[0] = 0x08;  // how to calculate this?
-    status = kxtj3->hw_tf->write_data(dev, KXTJ3_WAKEUP_THRD_H, reg, sizeof(reg));
-    if (status < 0) {
-        return status;
-    }
-
-    LOG_INF("%s: mode options: 0x%02X  -- \"%s\"", __func__, 
+    LOG_INF("%s: anymotiom mode: 0x%02X  -- \"%s\"", __func__, 
             mode_table[cfg->hw.accel_mode], 
             mode_tag_table[cfg->hw.accel_mode]);
 

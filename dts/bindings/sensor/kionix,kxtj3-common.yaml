@@ -27,7 +27,7 @@ properties:
 
   int-gpio-config:
     type: int
-    default: 0
+    default: 1
     description: |
       Select the interrupt configuration for INT gpio.
 
@@ -55,11 +55,11 @@ properties:
 
   anymotion-rate:
     type: int
-    default: 0
+    default: 4
     description: |
       Select the Output Wake-Up Function Rates.
 
-      The default of 0 (0.781 HZ) is a reaonable values.
+      The default of 0 (12.5 Hz) is a reaonable values.
       Change as needed.
 
       - 0  # KXTJ3_DT_OWUF_0p781_HZ
@@ -96,6 +96,22 @@ properties:
       - 11 # KXTJ3_DT_ODR_1600_HZ
 
     enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+  anymotion-counter:
+    type: int
+    default: 1
+    description: |
+      Select the number of anymotion-rate cycle to trigger Wake-Up event.
+      Example:  "anymotion-counter = <5>"  to wait five accel-rate period 
+                before triggering.
+      Valid range: 1 - 255  
+
+  anymotion-threshold:
+    type: int
+    default: 2048
+    description: |
+      Select the amount of acceleration (Gs) in order to trigger a Wake-Up event.
+      Valid range: 1 - 16383  (14-bits max.)
 
   accel-mode:
     type: int

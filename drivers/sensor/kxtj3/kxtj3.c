@@ -550,6 +550,12 @@ static int kxtj3_pm_action(const struct device *dev,
 #define ANYMOTION_RATE(inst) \
     DT_INST_PROP(inst, anymotion_rate)
 
+#define ANYMOTION_COUNTER(inst) \
+    DT_INST_PROP(inst, anymotion_counter)
+
+#define ANYMOTION_THRESHOLD(inst) \
+    DT_INST_PROP(inst, anymotion_threshold)
+
 
 #ifdef CONFIG_KXTJ3_TRIGGER
 #define GPIO_DT_SPEC_INST_GET_BY_IDX_COND(id, prop, idx)    \
@@ -575,21 +581,23 @@ static int kxtj3_pm_action(const struct device *dev,
 /*
  * Instantiation macros used when a device is on an I2C bus.
  */
-#define KXTJ3_CONFIG_I2C(inst)                              \
-    {                                                       \
-        .bus_init = kxtj3_i2c_init,                         \
-        .bus_cfg = {                                        \
-            .i2c = I2C_DT_SPEC_INST_GET(inst),              \
-        },                                                  \
-        .hw = {                                             \
-            .alt_reset_dev = GET_DT_ALT_RESET_DEV(inst),    \
-            .anymotion_on_int = ANYMOTION_ON_INT(inst),     \
-            .anymotion_latch = ANYMOTION_LATCH(inst),       \
-            .anymotion_rate = ANYMOTION_RATE(inst),         \
-            .accel_rate = GET_DT_ODR(inst),                 \
-            .accel_mode = GET_DT_MODE(inst),                \
-        },                                                  \
-        KXTJ3_CFG_INT(inst)                                 \
+#define KXTJ3_CONFIG_I2C(inst)                                  \
+    {                                                           \
+        .bus_init = kxtj3_i2c_init,                             \
+        .bus_cfg = {                                            \
+            .i2c = I2C_DT_SPEC_INST_GET(inst),                  \
+        },                                                      \
+        .hw = {                                                 \
+            .alt_reset_dev = GET_DT_ALT_RESET_DEV(inst),        \
+            .anymotion_on_int = ANYMOTION_ON_INT(inst),         \
+            .anymotion_latch = ANYMOTION_LATCH(inst),           \
+            .anymotion_rate = ANYMOTION_RATE(inst),             \
+            .anymotion_counter = ANYMOTION_COUNTER(inst),       \
+            .anymotion_threshold = ANYMOTION_THRESHOLD(inst),   \
+            .accel_rate = GET_DT_ODR(inst),                     \
+            .accel_mode = GET_DT_MODE(inst),                    \
+        },                                                      \
+        KXTJ3_CFG_INT(inst)                                     \
     }
 
 #define KXTJ3_DEFINE_I2C(inst)                              \
