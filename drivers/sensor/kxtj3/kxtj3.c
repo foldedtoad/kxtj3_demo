@@ -464,65 +464,18 @@ int kxtj3_init(const struct device *dev)
 
 }
 
-#ifdef CONFIG_PM_DEVICE
-static int kxtj3_pm_action(const struct device *dev,
-                enum pm_device_action action)
-{
-    int status;
-    struct kxtj3_data *kxtj3 = dev->data;
-    uint8_t regdata;
-
-    switch (action) {
-    case PM_DEVICE_ACTION_RESUME:
-        status = kxtj3->hw_tf->read_reg(dev, KXTJ3_REG_REFERENCE, &regdata);
-        if (status < 0) {
-            LOG_ERR("failed to read reg_reference");
-            return status;
-        }
-
-        /* Resume previous mode. */
-        status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1,
-                          kxtj3->reg_ctrl1_active_val);
-        if (status < 0) {
-            LOG_ERR("failed to write reg_crtl1");
-            return status;
-        }
-        break;
-    case PM_DEVICE_ACTION_SUSPEND:
-        /* Store current mode, suspend. */
-        status = kxtj3->hw_tf->read_reg(dev, KXTJ3_REG_CTRL1,
-                         &kxtj3->reg_ctrl1_active_val);
-        if (status < 0) {
-            LOG_ERR("failed to read reg_crtl1");
-            return status;
-        }
-        status = kxtj3->hw_tf->write_reg(dev, KXTJ3_REG_CTRL1, KXTJ3_SUSPEND);
-        if (status < 0) {
-            LOG_ERR("failed to write reg_crtl1");
-            return status;
-        }
-        break;
-    default:
-        return -ENOTSUP;
-    }
-
-    return 0;
-}
-#endif /* CONFIG_PM_DEVICE */
-
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 0
 #warning "KXTJ3 driver enabled without any devices"
 #endif
 
 /*
- * Device creation macro, KXTJ3_DEFINE_I2C().
+ * Device creation macro, KXTJ3_DEVICE_INIT().
  */
 
 #define KXTJ3_DEVICE_INIT(inst)                        \
-    PM_DEVICE_DT_INST_DEFINE(inst, kxtj3_pm_action);   \
     SENSOR_DEVICE_DT_INST_DEFINE(inst,                 \
                 kxtj3_init,                            \
-                PM_DEVICE_DT_INST_GET(inst),           \
+                0,  /* PM not supported */             \
                 &kxtj3_data_##inst,                    \
                 &kxtj3_config_##inst,                  \
                 POST_KERNEL,                           \

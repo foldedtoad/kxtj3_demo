@@ -29,10 +29,17 @@
 #define KXTJ3_OUT_Z_L                0x0A
 #define KXTJ3_OUT_Z_H                0x0B
 
-#define KXTJ3_STATUS                 0x18
 #define KXTJ3_INT_SOURCE1            0x16
+#define KXTJ3_INT_SOURCE1_DRDY       0x10
+#define KXTJ3_INT_SOURCE1_WUFS       0x02
+
 #define KXTJ3_INT_SOURCE2            0x17
-#define KXTJ3_INT_REL                0x1A
+#define KXTJ3_INT_SOURCE2_XNWU       0x20
+#define KXTJ3_INT_SOURCE2_XPWU       0x10
+#define KXTJ3_INT_SOURCE2_YNWU       0x08
+#define KXTJ3_INT_SOURCE2_YPWU       0x04
+#define KXTJ3_INT_SOURCE2_ZNWU       0x02
+#define KXTJ3_INT_SOURCE2_ZPWU       0x01
 
 #define KXTJ3_CTRL_REG1              0x1B
 #define KXTJ3_CTRL_REG1_PC           0x80
@@ -42,6 +49,10 @@
 #define KXTJ3_CTRL_REG1_GSEL2        0x08
 #define KXTJ3_CTRL_REG1_EN16G        0x04
 #define KXTJ3_CTRL_REG1_WUFE         0x02
+
+#define KXTJ3_STATUS                 0x18
+
+#define KXTJ3_INT_REL                0x1A
 
 #define KXTJ3_CTRL_REG2              0x1D
 #define KXTJ3_CTRL_REG2_SRST         0x80
@@ -193,11 +204,6 @@ int kxtj3_init_interrupt(const struct device *dev);
 int kxtj3_acc_slope_config(const struct device *dev,
                 enum sensor_attribute attr,
                 const struct sensor_value *val);
-#endif
-
-#ifdef CONFIG_KXTJ3_ACCEL_HP_FILTERS
-int kxtj3_acc_hp_filter_set(const struct device *dev,
-                 int32_t val);
 #endif
 
 int kxtj3_i2c_init(const struct device *dev);

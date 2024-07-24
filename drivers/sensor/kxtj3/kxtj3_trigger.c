@@ -279,6 +279,11 @@ static void kxtj3_thread_cb(const struct device *dev)
     struct kxtj3_data *kxtj3 = dev->data;
     const struct kxtj3_config *cfg = dev->config;
     int status;
+    uint8_t src;
+    uint8_t reg;
+
+    /* Read the INT_SOURCE1 register to determine interrupt type. */
+    kxtj3->hw_tf->read_reg(dev, KXTJ3_INT_SOURCE1, &src);
 
     if (cfg->gpio_drdy.port &&
         unlikely(atomic_test_and_clear_bit(&kxtj3->trig_flags, START_TRIG_INT))) {
@@ -291,7 +296,9 @@ static void kxtj3_thread_cb(const struct device *dev)
         return;
     }
 
-    if (cfg->gpio_drdy.port &&
+    LOG_INF("%s: INT_SOURCE1: 0x%02X", __func__, src);
+
+    if ((src & KXTJ3_INT_SOURCE1_DRDY) &&
         atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
 
         LOG_DBG("%s: DRDY callback", __func__);
@@ -310,7 +317,7 @@ static void kxtj3_thread_cb(const struct device *dev)
         return;
     }
 
-    if (cfg->gpio_int.port &&
+    if ((src & KXTJ3_INT_SOURCE1_WUFS) &&
         atomic_test_and_clear_bit(&kxtj3->trig_flags, TRIGGED_INT)) {
 
         LOG_DBG("%s: AnyMotion callback", __func__);
@@ -319,7 +326,6 @@ static void kxtj3_thread_cb(const struct device *dev)
             kxtj3->handler_anymotion(dev, kxtj3->trig_anymotion);
         }
 
-        uint8_t reg;
         kxtj3->hw_tf->read_reg(dev, KXTJ3_INT_REL, &reg);
 
         /* 
@@ -392,7 +398,7 @@ int kxtj3_init_interrupt(const struct device *dev)
         return status;
     }
 
-    LOG_INF("%s: DRDY int on %s.%02u", dev->name,
+    LOG_INF("%s: Interrupts on %s.%02u", dev->name,
                        cfg->gpio_drdy.port->name,
                        cfg->gpio_drdy.pin);
 
