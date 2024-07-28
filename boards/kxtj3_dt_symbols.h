@@ -6,8 +6,6 @@
 #ifndef _KXTJ3_DT_SYMBOLS_H_
 #define _KXTJ3_DT_SYMBOLS_H_
 
-#define USE_ANYMOTION 1
-
 /* GPIO interrupt configuration */
 #define KXTJ3_DT_GPIO_INT_EDGE             0
 #define KXTJ3_DT_GPIO_INT_EDGE_RISING      1

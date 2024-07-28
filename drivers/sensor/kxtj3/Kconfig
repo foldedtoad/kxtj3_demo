@@ -11,6 +11,19 @@ menuconfig KXTJ3
 
 if KXTJ3
 
+choice KXTJ3_MODE
+	prompt "Application mode"
+	help
+	  Specify the run-time operation mode: Data or AnyMotion.
+
+config KXTJ3_MODE_DATA
+	bool "Return accelerometer data"
+
+config KXTJ3_MODE_ANYMODE
+	bool "Indicate any motion"
+
+endchoice
+
 choice KXTJ3_TRIGGER_MODE
 	prompt "Trigger mode"
 	help

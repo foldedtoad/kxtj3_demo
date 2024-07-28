@@ -372,7 +372,7 @@ int kxtj3_init_interrupt(const struct device *dev)
             return -ENODEV;
         }
 
-        LOG_DBG("gpio_drdy not defined in DT");
+        LOG_INF("gpio_drdy not defined in DT");
         status = 0;
         goto check_gpio_int;
     }
@@ -415,7 +415,7 @@ check_gpio_int:
             return -ENODEV;
         }
 
-        LOG_DBG("gpio_int not defined in DT");
+        LOG_INF("gpio_int not defined in DT");
         status = 0;
         goto end;
     }

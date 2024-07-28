@@ -49,7 +49,7 @@ void fetch_and_display(const struct device *sensor)
 
 #ifdef CONFIG_KXTJ3_TRIGGER
 
-#if USE_ANYMOTION
+#if defined(CONFIG_KXTJ3_MODE_ANYMODE)
 
 static void trigger_anymotion_callback(const struct device *dev,
                 const struct sensor_trigger *trig)
@@ -57,7 +57,7 @@ static void trigger_anymotion_callback(const struct device *dev,
     LOG_INF("%s", __func__);
 }
 
-#else
+#else // defined(CONFIG_KXTJ3_MODE_DATA)
 static void trigger_data_callback(const struct device *dev,
                 const struct sensor_trigger *trig)
 {
@@ -65,7 +65,7 @@ static void trigger_data_callback(const struct device *dev,
 
     fetch_and_display(dev);
 }
-#endif // USE_ANYMOTION
+#endif // defined(CONFIG_KXTJ3_MODE_ANYMODE)
 
 #endif // CONFIG_KXTJ3_TRIGGER
 
@@ -86,7 +86,7 @@ int main(void)
     {
         struct sensor_trigger trig;
         int rc;
-#if USE_ANYMOTION
+#if defined(CONFIG_KXTJ3_MODE_ANYMODE)
         /* Any-Motion output */
         trig.type = SENSOR_TRIG_DELTA;
         trig.chan = 0;
@@ -96,7 +96,7 @@ int main(void)
             LOG_ERR("Failed to set trigger: %d", rc);
             return 0;
         }
-  #else
+  #else // defined(CONFIG_KXTJ3_MODE_DATA)
         /* normal x,y,z output */
         trig.type = SENSOR_TRIG_DATA_READY;
         trig.chan = SENSOR_CHAN_ACCEL_XYZ;
@@ -106,7 +106,7 @@ int main(void)
             LOG_ERR("Failed to set trigger: %d", rc);
             return 0;
         }
-#endif // USE_ANYMOTION
+#endif // defined(CONFIG_KXTJ3_MODE_ANYMODE)
 
         LOG_INF("Waiting for triggers");
         while (true) {
